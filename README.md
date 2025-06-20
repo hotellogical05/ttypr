@@ -9,6 +9,7 @@ Based on [Ratatui][Repo]
 # Usage
 
 Run the application - start typing.
+
 ESC - to exit
 
 # Credits
