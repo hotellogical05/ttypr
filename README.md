@@ -3,6 +3,7 @@
 **t**erminal **ty**ping **pr**actice
 
 Small application to practice ASCII (for now) typing
+
 Based on [Ratatui][Repo]
 
 # Credits
