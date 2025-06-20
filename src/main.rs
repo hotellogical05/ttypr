@@ -45,14 +45,14 @@ impl App {
             line: 0,
             typed: false,
             needs_redraw: true,
-            line_len: 0,
+            line_len: 10,
         }
     }
 
     // Run the application's main loop
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         // generate initial charset and ids
-        for _ in 0..9 {
+        for _ in 0..self.line_len*3 {
             self.charset.push_back(gen_random_ascii_char());
             self.ids.push_back(0);
         }
@@ -60,9 +60,9 @@ impl App {
         while self.running {
             if self.needs_redraw {
                 if self.typed {
-                    // position, whether 3 chars check
+                    // position, whether line_len chars check
                     let position = self.input_chars.len();
-                    if self.input_chars.len() == 3 {
+                    if self.input_chars.len() == self.line_len {
                         self.whether_first = false;
                     }
     
@@ -78,8 +78,8 @@ impl App {
                         } else {
                             self.ids[position-1] = 2;
                         }
-                        if self.input_chars.len() == 6 {
-                            for _ in 0..3 {
+                        if self.input_chars.len() == self.line_len*2 {
+                            for _ in 0..self.line_len {
                                 let _ = self.charset.pop_front();
                                 let _ = self.input_chars.pop_front();
                                 let _ = self.ids.pop_front();
@@ -102,7 +102,7 @@ impl App {
     fn render(&mut self, frame: &mut Frame) {
         let area = center(
             frame.area(),
-            Constraint::Length(3),
+            Constraint::Length(self.line_len as u16),
             Constraint::Length(3),
         );
 
@@ -118,7 +118,7 @@ impl App {
     
         let mut three_lines = vec![];
         for i in 0..3 {
-            let line_spans: Vec<Span> = span.iter().skip(i*3).take(3).map(|c| {
+            let line_spans: Vec<Span> = span.iter().skip(i*self.line_len).take(self.line_len).map(|c| {
                 c.clone()
             }).collect();
             let line = Line::from(line_spans);
