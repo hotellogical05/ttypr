@@ -102,7 +102,7 @@ impl App {
     fn render(&mut self, frame: &mut Frame) {
         let area = center(
             frame.area(),
-            Constraint::Length(9),
+            Constraint::Length(3),
             Constraint::Length(3),
         );
 
