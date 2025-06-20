@@ -144,7 +144,7 @@ impl App {
 
     fn on_key_event(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Char('q') => self.quit(),
+            KeyCode::Esc => self.quit(),
             KeyCode::Char(c) => {
                 self.input_chars.push_back(c.to_string());
                 self.needs_redraw = true;
