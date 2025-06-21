@@ -8,6 +8,12 @@ Small application to practice ASCII (for now) typing
 
 Based on [Ratatui][Repo]
 
+# Installation
+
+```shell
+cargo install ttypr
+```
+
 # Usage
 
 Run the application - start typing.
