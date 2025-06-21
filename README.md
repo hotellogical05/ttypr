@@ -1,3 +1,5 @@
+![](preview.gif)
+
 # ttypr
 
 **t**erminal **ty**ping **pr**actice
@@ -15,5 +17,7 @@ ESC - to exit
 # Credits
 
 - filipriec [ gitlab.com/filipriec ] - Line display logic, rendering logic
+
+- Concept taken from: monkeytype.com
 
 [Repo]: https://github.com/ratatui/ratatui
