@@ -4,12 +4,10 @@ use ratatui::{
     prelude::*,
     DefaultTerminal,
     layout::Flex,
-    widgets::Paragraph,
-    widgets::List,
+    widgets::{List, ListItem},
 };
 use std::collections::VecDeque;
 use ttypr::gen_random_ascii_char;
-use ratatui::widgets::ListItem;
 
 #[derive(Debug)]
 pub struct App {
@@ -18,7 +16,6 @@ pub struct App {
     input_chars: VecDeque<String>,
     ids: VecDeque<u8>,
     whether_first: bool,
-    line: usize,
     typed: bool,
     needs_redraw: bool,
     line_len: usize,
@@ -27,7 +24,7 @@ pub struct App {
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
     let terminal = ratatui::init();
-    let mut app = App::new();
+    let app= App::new();
     let result = app.run(terminal);
     ratatui::restore();
     result
@@ -42,7 +39,6 @@ impl App {
             input_chars: VecDeque::new(),
             ids: VecDeque::new(),  // 0 - untyped, 1 - correct, 2 - incorrect
             whether_first: true,
-            line: 0,
             typed: false,
             needs_redraw: true,
             line_len: 10,
