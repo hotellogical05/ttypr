@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "terminal typing practice"
 license = "GPL-3.0-only"
+repository = "https://github.com/hotellogical05/ttypr"
 
 [dependencies]
 ratatui = "0.29.0"
