@@ -16,13 +16,13 @@ cargo install ttypr
 
 # Usage
 
-Run the application - start typing.
+Run the application - start typing
 
 ESC - to exit
 
 # Credits
 
-- filipriec [ gitlab.com/filipriec ] - Line display logic, rendering logic
+- filipriec [ gitlab.com/filipriec ] - creating a vector of styled Spans idea, if needs_redraw rendering concept
 
 - Concept taken from: monkeytype.com
 
