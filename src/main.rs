@@ -41,7 +41,7 @@ impl App {
             whether_first: true,
             typed: false,
             needs_redraw: true,
-            line_len: 10,
+            line_len: 40,
         }
     }
 
@@ -63,12 +63,14 @@ impl App {
                     }
     
                     if self.whether_first {
+                        // repeated code to function in lib.rs
                         if self.input_chars[position-1] == self.charset[position-1] {
                             self.ids[position-1] = 1;
                         } else {
                             self.ids[position-1] = 2;
                         }
                     } else {
+                        // repeated code to function in lib.rs
                         if self.input_chars[position-1] == self.charset[position-1] {
                             self.ids[position-1] = 1;
                         } else {
@@ -99,7 +101,7 @@ impl App {
         let area = center(
             frame.area(),
             Constraint::Length(self.line_len as u16),
-            Constraint::Length(3),
+            Constraint::Length(5),
         );
 
         let span: Vec<Span> = self.charset.iter().enumerate().map(|(i, c)| {
@@ -120,6 +122,7 @@ impl App {
             let line = Line::from(line_spans);
             let item = ListItem::new(line);
             three_lines.push(item);
+            three_lines.push(ListItem::new(""));
         }
         
         let list = List::new(three_lines);
