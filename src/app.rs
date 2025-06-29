@@ -10,6 +10,7 @@ pub struct App {
     pub line_len: usize,
     pub current_mode: CurrentMode,
     pub current_typing_mode: CurrentTypingMode,
+    pub needs_clear: bool,
 }
 
 pub enum CurrentMode {
@@ -35,6 +36,7 @@ impl App {
             line_len: 40,
             current_mode: CurrentMode::Menu,
             current_typing_mode: CurrentTypingMode::Ascii,
+            needs_clear: false,
         }
     }
 

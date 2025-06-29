@@ -1,13 +1,13 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use ratatui::DefaultTerminal;
+use ratatui::{DefaultTerminal};
 use ttypr::gen_random_ascii_char;
 
 mod app;
 mod ui;
 use crate::{
     app::{App, CurrentMode, CurrentTypingMode},
-    ui::render,
+    ui::{render, draw_on_clear},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -28,6 +28,11 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     }
     
     while app.running {
+        if app.needs_clear { 
+            terminal.draw(|frame| draw_on_clear(frame))?;
+            app.needs_clear = false;
+            app.needs_redraw = true;
+        }
         if app.needs_redraw {
             match app.current_mode {
                 CurrentMode::Menu => {},
@@ -89,6 +94,7 @@ impl App {
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
                     KeyCode::Char('m') => { 
+                        self.needs_clear = true;
                         match self.current_typing_mode {
                             CurrentTypingMode::Ascii => { self.current_typing_mode = CurrentTypingMode::Words },
                             CurrentTypingMode::Words => { self.current_typing_mode = CurrentTypingMode::Ascii },
