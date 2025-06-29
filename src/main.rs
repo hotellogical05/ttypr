@@ -6,7 +6,7 @@ use ttypr::gen_random_ascii_char;
 mod app;
 mod ui;
 use crate::{
-    app::{App, CurrentMode},
+    app::{App, CurrentMode, CurrentTypingMode},
     ui::render,
 };
 
@@ -30,9 +30,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     while app.running {
         if app.needs_redraw {
             match app.current_mode {
-                CurrentMode::Menu => {
-
-                },
+                CurrentMode::Menu => {},
                 CurrentMode::Typing => if app.typed {
                     // number of characters the user typed, to compare with the charset
                     let pos = app.input_chars.len() - 1;
@@ -85,31 +83,49 @@ impl App {
 
     // What happens on key presses
     fn on_key_event(&mut self, key: KeyEvent) {
+        // What mode is currently selected Menu or Typing
         match self.current_mode {
             CurrentMode::Menu => {
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
+                    KeyCode::Char('m') => { 
+                        match self.current_typing_mode {
+                            CurrentTypingMode::Ascii => { self.current_typing_mode = CurrentTypingMode::Words },
+                            CurrentTypingMode::Words => { self.current_typing_mode = CurrentTypingMode::Ascii },
+                        }
+                    }
                     KeyCode::Char('i') => self.current_mode = CurrentMode::Typing,
                     _ => {}
                 }
             },
+            // If Typing mode is selected, take actions depending on typing option selected (ASCII, Words)
             CurrentMode::Typing => {
-                match key.code {
-                    KeyCode::Esc => self.current_mode = CurrentMode::Menu, // stop the application if ESC pressed
-                    KeyCode::Char(c) => {
-                        self.input_chars.push_back(c.to_string()); // add to input characters
-                        self.needs_redraw = true;
-                        self.typed = true;
-                    }
-                    KeyCode::Backspace => {
-                        let position = self.input_chars.len();
-                        if position > 0 { // if there are no input characters - don't do anything
-                            self.input_chars.pop_back();
-                            self.ids[position-1] = 0;
-                            self.needs_redraw = true;
+                match self.current_typing_mode {
+                    CurrentTypingMode::Ascii => {
+                        match key.code {
+                            KeyCode::Esc => self.current_mode = CurrentMode::Menu, // switch to Menu mode if ESC pressed
+                            KeyCode::Char(c) => {
+                                self.input_chars.push_back(c.to_string()); // add to input characters
+                                self.needs_redraw = true;
+                                self.typed = true;
+                            }
+                            KeyCode::Backspace => {
+                                let position = self.input_chars.len();
+                                if position > 0 { // if there are no input characters - don't do anything
+                                    self.input_chars.pop_back();
+                                    self.ids[position-1] = 0;
+                                    self.needs_redraw = true;
+                                }
+                            }
+                            _ => {}
                         }
-                    }
-                    _ => {}
+                    },
+                    CurrentTypingMode::Words => {
+                        match key.code {
+                            KeyCode::Esc => self.current_mode = CurrentMode::Menu, // switch to Menu mode if ESC pressed
+                            _ => {}
+                        }
+                    },
                 }
             }
         }
