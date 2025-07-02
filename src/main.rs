@@ -104,6 +104,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                     }
                                     let one_line = gen_one_line_of_words(app.line_len, &app.words);
                                     let characters: Vec<char> = one_line.chars().collect();
+                                    app.lines_len.pop_front();
                                     app.lines_len.push_back(characters.len());
                                     for char in characters {
                                         app.charset.push_back(char.to_string());

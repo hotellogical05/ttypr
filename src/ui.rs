@@ -60,7 +60,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                 let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
                     c.clone()
                 }).collect();
-                let line = Line::from(line_span);
+                let line = Line::from(line_span).alignment(ratatui::layout::Alignment::Center);
                 let item = ListItem::new(line);
                 three_lines.push(item); // Push the line
                 three_lines.push(ListItem::new("")); // Push an empty space to separate lines
