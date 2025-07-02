@@ -1,6 +1,6 @@
 [package]
 name = "ttypr"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "terminal typing practice"
 license = "MIT"
@@ -11,3 +11,4 @@ ratatui = "0.29.0"
 crossterm = "0.28.1"
 color-eyre = "0.6.4"
 rand = "0.9.1"
+home = "0.5.9"

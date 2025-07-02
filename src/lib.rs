@@ -10,7 +10,15 @@ pub fn gen_random_ascii_char() -> String {
 }
     
 pub fn read_words_from_file() -> io::Result<Vec<String>> {
-    let content = fs::read_to_string("words.txt")?;
+    // Get the home directory path
+    let home_path = home::home_dir().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::NotFound, "Home directory not found")
+    })?;
+
+    // Construct the full path to the words.txt file
+    let config_path = home_path.join(".config/ttypr/words.txt");
+
+    let content = fs::read_to_string(config_path)?;
     let words = content
         .split_whitespace() // Split the string into an iterator of string slices (&str)
         .map(String::from) // Convert each string slice into an owned String

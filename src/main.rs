@@ -32,7 +32,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // (For the Words option) - Read the words from .config/ttypr/words
     app.words = match read_words_from_file() {
         Ok(words) => words,
-        Err(_) => { todo!() }
+        Err(_) => { vec![] }
     };
     
     while app.running {
@@ -102,7 +102,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                         app.input_chars.pop_front();
                                         app.ids.pop_front();
                                     }
-                                    app.lines_len.pop_front();
                                     let one_line = gen_one_line_of_words(app.line_len, &app.words);
                                     let characters: Vec<char> = one_line.chars().collect();
                                     app.lines_len.push_back(characters.len());
