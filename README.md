@@ -6,7 +6,7 @@
 
 Current typing options: **ASCII** and **Words**
 
-**Note: you need to have a ~/.config/ttypr/words.txt file, with words separted by spaces for the Words typing option. If you don't, and try to switch modes - application will panic.**
+**For the Words typing option you need to have a ~/.config/ttypr/words.txt file, with words separted by spaces.**
 
 Based on [Ratatui][Repo]
 

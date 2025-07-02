@@ -80,38 +80,41 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             }
                         }
                         CurrentTypingMode::Words => {
-                            if app.typed {
-                                // Number of characters the user typed, to compare with the charset
-                                let pos = app.input_chars.len() - 1;
+                            if app.words.len() == 0 {}
+                            else {
+                                if app.typed {
+                                    // Number of characters the user typed, to compare with the charset
+                                    let pos = app.input_chars.len() - 1;
 
-                                // If the input character matches the characters in the
-                                // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
-                                if app.input_chars[pos] == app.charset[pos] {
-                                    app.ids[pos] = 1;
-                                } else {
-                                    app.ids[pos] = 2;
-                                }
+                                    // If the input character matches the characters in the
+                                    // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
+                                    if app.input_chars[pos] == app.charset[pos] {
+                                        app.ids[pos] = 1;
+                                    } else {
+                                        app.ids[pos] = 2;
+                                    }
 
-                                // If reached the end of the second line, remove first line amount
-                                // of characters (words) from the character set, the user
-                                // inputted characters, and ids. Then push new line amount of 
-                                // characters (words) to charset, and that amount of 0's to ids
-                                if app.input_chars.len() == app.lines_len[0] + app.lines_len[1] {
-                                    for _ in 0..app.lines_len[0] {
-                                        app.charset.pop_front();
-                                        app.input_chars.pop_front();
-                                        app.ids.pop_front();
+                                    // If reached the end of the second line, remove first line amount
+                                    // of characters (words) from the character set, the user
+                                    // inputted characters, and ids. Then push new line amount of 
+                                    // characters (words) to charset, and that amount of 0's to ids
+                                    if app.input_chars.len() == app.lines_len[0] + app.lines_len[1] {
+                                        for _ in 0..app.lines_len[0] {
+                                            app.charset.pop_front();
+                                            app.input_chars.pop_front();
+                                            app.ids.pop_front();
+                                        }
+                                        let one_line = gen_one_line_of_words(app.line_len, &app.words);
+                                        let characters: Vec<char> = one_line.chars().collect();
+                                        app.lines_len.pop_front();
+                                        app.lines_len.push_back(characters.len());
+                                        for char in characters {
+                                            app.charset.push_back(char.to_string());
+                                            app.ids.push_back(0);
+                                        }
                                     }
-                                    let one_line = gen_one_line_of_words(app.line_len, &app.words);
-                                    let characters: Vec<char> = one_line.chars().collect();
-                                    app.lines_len.pop_front();
-                                    app.lines_len.push_back(characters.len());
-                                    for char in characters {
-                                        app.charset.push_back(char.to_string());
-                                        app.ids.push_back(0);
-                                    }
-                                }
-                                app.typed = false;
+                                    app.typed = false;
+                                 }
                             }
                         }
                     }
@@ -155,16 +158,18 @@ impl App {
                                 self.input_chars.clear();
                                 self.ids.clear();
                                 
-
-                                // * need similar logic to ascii in the main loop, and similar display logic in ui.rs
-                                // generate three lines of words, charaset[_, 100+] & lines_len[_, _, _] long
-                                for _ in 0..3 {
-                                    let one_line = gen_one_line_of_words(self.line_len, &self.words);
-                                    let characters: Vec<char> = one_line.chars().collect();
-                                    self.lines_len.push_back(characters.len());
-                                    for char in characters {
-                                        self.charset.push_back(char.to_string());
-                                        self.ids.push_back(0);
+                                if self.words.len() == 0 {}
+                                else {
+                                    // * need similar logic to ascii in the main loop, and similar display logic in ui.rs
+                                    // generate three lines of words, charaset[_, 100+] & lines_len[_, _, _] long
+                                    for _ in 0..3 {
+                                        let one_line = gen_one_line_of_words(self.line_len, &self.words);
+                                        let characters: Vec<char> = one_line.chars().collect();
+                                        self.lines_len.push_back(characters.len());
+                                        for char in characters {
+                                            self.charset.push_back(char.to_string());
+                                            self.ids.push_back(0);
+                                        }
                                     }
                                 }
 

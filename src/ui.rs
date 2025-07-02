@@ -56,24 +56,29 @@ pub fn render(frame: &mut Frame, app: &App) {
             frame.render_widget(list, area);
         }
         CurrentTypingMode::Words => {
-            // Separating vector of all the colored characters into vector of 3 lines, each line_len long
-            // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
-            let mut three_lines = vec![];
-            let mut skip_len = 0;
-            for i in 0..3 {
-                let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
-                    c.clone()
-                }).collect();
-                let line = Line::from(line_span).alignment(ratatui::layout::Alignment::Center);
-                let item = ListItem::new(line);
-                three_lines.push(item); // Push the line
-                three_lines.push(ListItem::new("")); // Push an empty space to separate lines
-                skip_len += app.lines_len[i];
+            if app.words.len() == 0 {
+                let no_words_line = Line::from("No words file provided.").alignment(ratatui::layout::Alignment::Center);
+                frame.render_widget(no_words_line, area);
+            } else {
+                // Separating vector of all the colored characters into vector of 3 lines, each line_len long
+                // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
+                let mut three_lines = vec![];
+                let mut skip_len = 0;
+                for i in 0..3 {
+                    let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
+                        c.clone()
+                    }).collect();
+                    let line = Line::from(line_span).alignment(ratatui::layout::Alignment::Center);
+                    let item = ListItem::new(line);
+                    three_lines.push(item); // Push the line
+                    three_lines.push(ListItem::new("")); // Push an empty space to separate lines
+                    skip_len += app.lines_len[i];
+                }
+            
+                // Make a List widget out of list items and render it in the middle
+                let list = List::new(three_lines);
+                frame.render_widget(list, area);
             }
-
-            // Make a List widget out of list items and render it in the middle
-            let list = List::new(three_lines);
-            frame.render_widget(list, area);
         }
     } 
 }
