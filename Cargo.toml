@@ -1,9 +1,9 @@
 [package]
 name = "ttypr"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
 description = "terminal typing practice"
-license = "GPL-3.0-only"
+license = "MIT"
 repository = "https://github.com/hotellogical05/ttypr"
 
 [dependencies]
