@@ -23,8 +23,12 @@ pub fn render(frame: &mut Frame, app: &App) {
         if app.ids[i] == 1 {
             Span::styled(c.to_string(), Style::new().fg(Color::Indexed(10)))
         // If inputted character doesn't match charset character add a red colored character that user inputted
-        } else if app.ids[i] == 2 { // 
-            Span::styled(app.input_chars[i].to_string(), Style::new().fg(Color::Indexed(9)))
+        } else if app.ids[i] == 2 {
+            if app.input_chars[i] == " " {
+                Span::styled("_".to_string(), Style::new().fg(Color::Indexed(9)))
+            } else {
+                Span::styled(app.input_chars[i].to_string(), Style::new().fg(Color::Indexed(9)))
+            }
         // Otherwise add a grey colored character (hasn't been typed yet)
         } else {
             Span::styled(c.to_string(), Style::new().fg(Color::Indexed(8)))
