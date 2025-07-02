@@ -9,8 +9,10 @@ pub struct App {
     pub input_chars: VecDeque<String>, // The characters user typed
     pub ids: VecDeque<u8>, // Identifiers to display colored characters (0 - untyped, 1 - correct, 2 - incorrect)
     pub line_len: usize,
+    pub lines_len: VecDeque<usize>,
     pub current_mode: CurrentMode,
     pub current_typing_mode: CurrentTypingMode,
+    pub words: Vec<String>,
 }
 
 pub enum CurrentMode {
@@ -35,8 +37,10 @@ impl App {
             input_chars: VecDeque::new(),
             ids: VecDeque::new(),
             line_len: 40,
+            lines_len: VecDeque::new(),
             current_mode: CurrentMode::Menu,
             current_typing_mode: CurrentTypingMode::Ascii,
+            words: vec![],
         }
     }
 

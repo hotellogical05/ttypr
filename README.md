@@ -16,9 +16,13 @@ cargo install ttypr
 
 # Usage
 
-Run the application - start typing
+**Menu mode:**
+q - exit the application
+i - switch to typing mode
+m - switch typing option (ASCII, Words)
 
-ESC - to exit
+**Typing mode:**
+ESC - switch to menu mode
 
 # Credits
 
