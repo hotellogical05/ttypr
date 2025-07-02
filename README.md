@@ -33,5 +33,5 @@ cargo install ttypr
 - Concept taken from: [Monkeytype][MonkeytypeLink]
 
 [Repo]: https://github.com/ratatui/ratatui
-[FilipsGitLab]: gitlab.com/filipriec
-[MonkeytypeLink]: monkeytype.com
+[FilipsGitLab]: https://gitlab.com/filipriec
+[MonkeytypeLink]: https://monkeytype.com
