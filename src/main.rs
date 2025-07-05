@@ -114,7 +114,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                         }
                                     }
                                     app.typed = false;
-                                 }
+                                }
                             }
                         }
                     }
@@ -182,6 +182,7 @@ impl App {
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
+                                self.lines_len.clear();
                                 
                                 for _ in 0..self.line_len*3 {
                                     self.charset.push_back(gen_random_ascii_char());
@@ -194,6 +195,34 @@ impl App {
                         }
                     }
                     KeyCode::Char('i') => self.current_mode = CurrentMode::Typing,
+                    // If Enter pressed in the Words typing option, with no words file provided - create the default one.
+                    KeyCode::Enter => { 
+                        match self.current_typing_mode {
+                            CurrentTypingMode::Words => {
+                                if self.words.len() == 0 {
+                                    let default_words = vec!["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "over", "think", "also", "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us", "thing", "man", "find", "part", "eye", "place", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "leave", "while", "mean", "keep", "student", "great", "seem", "same", "tell", "begin", "help", "talk", "where", "turn", "start", "might", "show", "hear", "play", "run", "move", "live", "believe", "hold", "bring", "happen", "must", "write", "provide", "sit", "stand", "lose", "pay", "meet", "include", "continue", "set", "learn", "change", "lead", "understand", "watch", "follow", "stop", "create", "speak", "read", "allow", "add", "spend", "grow", "open", "walk", "win", "offer", "remember", "love", "consider", "appear", "buy", "wait", "serve", "die", "send", "expect", "build", "stay", "fall", "cut", "reach", "kill", "remain", "suggest", "raise", "pass", "sell", "require", "report", "decide", "pull", "return", "explain", "hope", "develop", "carry", "break", "receive", "agree", "support", "hit", "produce", "eat", "cover", "catch", "draw", "choose", "cause", "listen", "maybe", "until", "without", "probably", "around", "small", "green", "special", "difficult", "available", "likely", "short", "single", "medical", "current", "wrong", "private", "past", "foreign", "fine", "common", "poor", "natural", "significant", "similar", "hot", "dead", "central", "happy", "serious", "ready", "simple", "left", "physical", "general", "environmental", "financial", "blue", "democratic", "dark", "various", "entire", "close", "legal", "religious", "cold", "final", "main", "huge", "popular", "traditional", "cultural", "choice", "high", "big", "large", "particular", "tiny", "enormous"];
+                                    let default_words: Vec<String> = default_words
+                                        .iter()
+                                        .map(|w| w.to_string())
+                                        .collect();
+                                    self.words = default_words;
+                                    self.needs_redraw = true;
+                                }
+                                else {}
+                            }
+                            _ => {}
+                        }
+                        // generate three lines of words, charaset[_, 100+] & lines_len[_, _, _] long
+                        for _ in 0..3 {
+                            let one_line = gen_one_line_of_words(self.line_len, &self.words);
+                            let characters: Vec<char> = one_line.chars().collect();
+                            self.lines_len.push_back(characters.len());
+                            for char in characters {
+                                self.charset.push_back(char.to_string());
+                                self.ids.push_back(0);
+                            }
+                        }
+                    }
                     _ => {}
                 }
             },

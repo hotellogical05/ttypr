@@ -57,8 +57,34 @@ pub fn render(frame: &mut Frame, app: &App) {
         }
         CurrentTypingMode::Words => {
             if app.words.len() == 0 {
-                let no_words_line = Line::from("No words file provided.").alignment(ratatui::layout::Alignment::Center);
-                frame.render_widget(no_words_line, area);
+                let area = center(
+                    frame.area(),
+                    Constraint::Length(50),
+                    Constraint::Length(15),
+                );
+
+                let no_words_message = vec![
+                    Line::from("In order to use the Words typing option").alignment(ratatui::layout::Alignment::Center),
+                    Line::from("you need to have a:").alignment(ratatui::layout::Alignment::Center),
+                    Line::from(""), // Push an empty space to separate lines
+                    Line::from("~/.config/ttypr/words.txt").alignment(ratatui::layout::Alignment::Center),
+                    Line::from(""),
+                    Line::from("The formatting is just words separated by spaces").alignment(ratatui::layout::Alignment::Center),
+                    Line::from(""),
+                    Line::from("Or you can use the default one by pressing Enter").alignment(ratatui::layout::Alignment::Center),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(ratatui::layout::Alignment::Center)
+                ];
+
+                // * Understand what happens here:
+                let no_words_message: Vec<_> = no_words_message
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+
+                let no_words_message = List::new(no_words_message);
+                frame.render_widget(no_words_message, area);
             } else {
                 // Separating vector of all the colored characters into vector of 3 lines, each line_len long
                 // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
