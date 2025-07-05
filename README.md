@@ -1,4 +1,4 @@
-![](app-preview.gif)
+![](preview.gif)
 
 # ttypr
 
@@ -6,9 +6,7 @@
 
 Current typing options: **ASCII** and **Words**
 
-**For the Words typing option you need to have a ~/.config/ttypr/words.txt file, with words separted by spaces.**
-
-Based on [Ratatui][Repo]
+Based on [Ratatui][RatatuiRepo]
 
 # Installation
 
@@ -18,22 +16,29 @@ cargo install ttypr
 
 # Usage
 
+> **Note:** the application starts in the **Menu mode**.
+
 **Menu mode:**
 
 - **q** - exit the application
-- **i** - switch to typing mode
-- **m** - switch typing option (ASCII, Words)
+- **i** - switch to Typing mode
+- **m** - switch Typing option (ASCII, Words)
 
 **Typing mode:**
 
-- **ESC** - switch to menu mode
+- **ESC** - switch to Menu mode
 
-# Credits
+# Acknowledgements
 
 - [filipriec][FilipsGitLab] - creating a vector of styled Spans idea, if needs_redraw rendering concept
 
 - Concept taken from: [Monkeytype][MonkeytypeLink]
 
-[Repo]: https://github.com/ratatui/ratatui
+# License
+
+This project is licensed under the [MIT License][MITLicense].
+
+[RatatuiRepo]: https://github.com/ratatui/ratatui
 [FilipsGitLab]: https://gitlab.com/filipriec
 [MonkeytypeLink]: https://monkeytype.com
+[MITLicense]: https://github.com/hotellogical05/ttypr/blob/main/LICENSE

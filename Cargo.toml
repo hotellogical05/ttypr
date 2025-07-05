@@ -1,10 +1,11 @@
 [package]
 name = "ttypr"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 description = "terminal typing practice"
 license = "MIT"
 repository = "https://github.com/hotellogical05/ttypr"
+keywords = ["tui", "terminal", "typing", "practice", "tutor"]
 
 [dependencies]
 ratatui = "0.29.0"

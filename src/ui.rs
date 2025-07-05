@@ -1,6 +1,6 @@
-use crate::app::{App, CurrentTypingMode};
+use crate::app::{App, CurrentMode, CurrentTypingMode};
 use ratatui::{
-    layout::Flex, 
+    layout::{Alignment, Direction, Flex}, 
     prelude::{Constraint, Layout, Rect}, 
     style::{Color, Style}, 
     text::{Line, Span}, 
@@ -16,6 +16,57 @@ pub fn render(frame: &mut Frame, app: &App) {
         Constraint::Length(app.line_len as u16), // Width depending on set line length
         Constraint::Length(5), // Height, 5 - because spaces between them
     );
+
+    // Typing mode selection display (Menu, Typing)
+    if app.show_mode_notification {
+        let mode_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(60),
+                Constraint::Percentage(10),
+                Constraint::Percentage(30),
+            ]).split(frame.area());
+        
+        match app.current_mode {
+            CurrentMode::Menu => {
+                frame.render_widget(Line::from("- Menu mode -").alignment(Alignment::Center), mode_area[1]);
+            }
+            CurrentMode::Typing => {
+                frame.render_widget(Line::from("- Typing mode -").alignment(Alignment::Center), mode_area[1]);
+            }
+        }
+    }
+    
+    // Typing option selection display (Ascii, Words)
+    if app.show_option_notification {
+        let option_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Length(2),
+                Constraint::Min(0),
+            ]).split(frame.area());
+        let option_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Min(0),
+                Constraint::Length(5),
+            ]).split(option_area[1]);
+
+        let mut option_span: Vec<ListItem> = vec![];
+
+        match app.current_typing_mode {
+            CurrentTypingMode::Ascii => {
+                option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::Black).bg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::White))));
+            }
+            CurrentTypingMode::Words => {
+                option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::Black).bg(Color::White))));
+            }
+        }
+        
+        frame.render_widget(List::new(option_span), option_area[1]);
+    }
 
     // A vector of colored characters
     let span: Vec<Span> = app.charset.iter().enumerate().map(|(i, c)| {
@@ -64,20 +115,19 @@ pub fn render(frame: &mut Frame, app: &App) {
                 );
 
                 let no_words_message = vec![
-                    Line::from("In order to use the Words typing option").alignment(ratatui::layout::Alignment::Center),
-                    Line::from("you need to have a:").alignment(ratatui::layout::Alignment::Center),
+                    Line::from("In order to use the Words typing option").alignment(Alignment::Center),
+                    Line::from("you need to have a:").alignment(Alignment::Center),
                     Line::from(""), // Push an empty space to separate lines
-                    Line::from("~/.config/ttypr/words.txt").alignment(ratatui::layout::Alignment::Center),
+                    Line::from("~/.config/ttypr/words.txt").alignment(Alignment::Center),
                     Line::from(""),
-                    Line::from("The formatting is just words separated by spaces").alignment(ratatui::layout::Alignment::Center),
+                    Line::from("The formatting is just words separated by spaces").alignment(Alignment::Center),
                     Line::from(""),
-                    Line::from("Or you can use the default one by pressing Enter").alignment(ratatui::layout::Alignment::Center),
+                    Line::from("Or you can use the default one by pressing Enter").alignment(Alignment::Center),
                     Line::from(""),
                     Line::from(""),
-                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(ratatui::layout::Alignment::Center)
+                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
                 ];
 
-                // * Understand what happens here:
                 let no_words_message: Vec<_> = no_words_message
                     .into_iter()
                     .map(ListItem::new)
@@ -94,7 +144,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                     let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
                         c.clone()
                     }).collect();
-                    let line = Line::from(line_span).alignment(ratatui::layout::Alignment::Center);
+                    let line = Line::from(line_span).alignment(Alignment::Center);
                     let item = ListItem::new(line);
                     three_lines.push(item); // Push the line
                     three_lines.push(ListItem::new("")); // Push an empty space to separate lines

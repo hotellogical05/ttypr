@@ -21,7 +21,6 @@ fn main() -> color_eyre::Result<()> {
 
 // Run the application's main loop
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
-    
     // (For the ASCII option) - Generate initial random charset and all ids set to 0
     // (This for block is here because the default typing option is Ascii)
     for _ in 0..app.line_len*3 {
@@ -36,12 +35,17 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     };
     
     while app.running {
+
+        // Timer for notifications diplay
+        app.on_tick();
+
         // Clears the entire area when switching typing modes to draw switched mode ui on top of
         if app.needs_clear { 
             terminal.draw(|frame| draw_on_clear(frame))?;
             app.needs_clear = false;
             app.needs_redraw = true;
         }
+
         if app.needs_redraw {
             // Which current typing mode the app is currently in?
             match app.current_mode {
@@ -104,10 +108,15 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                             app.input_chars.pop_front();
                                             app.ids.pop_front();
                                         }
+
                                         let one_line = gen_one_line_of_words(app.line_len, &app.words);
                                         let characters: Vec<char> = one_line.chars().collect();
+
+                                        // Remove the length of the first line of words from the front, 
+                                        // and push the new one to the back.
                                         app.lines_len.pop_front();
                                         app.lines_len.push_back(characters.len());
+
                                         for char in characters {
                                             app.charset.push_back(char.to_string());
                                             app.ids.push_back(0);
@@ -132,11 +141,14 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 impl App {
     // Reads the terminal events
     fn handle_crossterm_events(&mut self) -> Result<()> {
-        match event::read()? {
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key), // Handle keyboard input
-            Event::Mouse(_) => {}
-            Event::Resize(_, _) => { self.needs_redraw = true; } // Re-render if terminal window resized
-            _ => {}
+        // Only wait for keyboard events for 50ms - otherwise continue the loop iteration
+        if event::poll(std::time::Duration::from_millis(50))? {
+            match event::read()? {
+                Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key), // Handle keyboard input
+                Event::Mouse(_) => {}
+                Event::Resize(_, _) => { self.needs_redraw = true; } // Re-render if terminal window resized
+                _ => {}
+            }
         }
         Ok(())
     }
@@ -150,6 +162,7 @@ impl App {
                     KeyCode::Char('q') => self.quit(),
                     KeyCode::Char('m') => { 
                         self.needs_clear = true;
+                        self.show_option_notification();
                         match self.current_typing_mode {
                             // If switched to Words typing option - clear charset, input_chars
                             // and ids. Afterward - generate new words charset.
@@ -194,7 +207,11 @@ impl App {
                             },
                         }
                     }
-                    KeyCode::Char('i') => self.current_mode = CurrentMode::Typing,
+                    KeyCode::Char('i') => { 
+                        self.current_mode = CurrentMode::Typing;
+                        self.show_mode_notification();
+                        self.needs_redraw = true;
+                    },
                     // If Enter pressed in the Words typing option, with no words file provided - create the default one.
                     KeyCode::Enter => { 
                         match self.current_typing_mode {
@@ -212,7 +229,7 @@ impl App {
                             }
                             _ => {}
                         }
-                        // generate three lines of words, charaset[_, 100+] & lines_len[_, _, _] long
+                        // Generate three lines of words, charset[_, 100+] and lines_len[_, _, _]
                         for _ in 0..3 {
                             let one_line = gen_one_line_of_words(self.line_len, &self.words);
                             let characters: Vec<char> = one_line.chars().collect();
@@ -231,7 +248,11 @@ impl App {
                 match self.current_typing_mode {
                     CurrentTypingMode::Ascii => {
                         match key.code {
-                            KeyCode::Esc => self.current_mode = CurrentMode::Menu, // Switch to Menu mode if ESC pressed
+                            KeyCode::Esc => { // Switch to Menu mode if ESC pressed
+                                self.current_mode = CurrentMode::Menu; 
+                                self.show_mode_notification();
+                                self.needs_redraw = true;
+                            },
                             KeyCode::Char(c) => {
                                 self.input_chars.push_back(c.to_string()); // Add to input characters
                                 self.needs_redraw = true;
@@ -250,7 +271,11 @@ impl App {
                     },
                     CurrentTypingMode::Words => {
                         match key.code {
-                            KeyCode::Esc => self.current_mode = CurrentMode::Menu, // Switch to Menu mode if ESC pressed
+                            KeyCode::Esc => { // Switch to Menu mode if ESC pressed
+                                self.current_mode = CurrentMode::Menu;
+                                self.show_mode_notification();
+                                self.needs_redraw = true;
+                            },
                             KeyCode::Char(c) => {
                                 self.input_chars.push_back(c.to_string()); // Add to input characters
                                 self.needs_redraw = true;
