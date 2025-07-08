@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
+use ttypr::Config;
+
 pub struct App {
     pub running: bool,
     pub needs_redraw: bool,
@@ -17,6 +19,7 @@ pub struct App {
     pub show_mode_notification: bool,
     pub show_option_notification: bool,
     pub notification_time_count: Option<Instant>,
+    pub config: Option<Config>,
 }
 
 pub enum CurrentMode {
@@ -48,6 +51,7 @@ impl App {
             show_mode_notification: false,
             show_option_notification: false,
             notification_time_count: None,
+            config: None,
         }
     }
 
@@ -65,7 +69,6 @@ impl App {
         self.show_option_notification = true;
         self.notification_time_count = Some(Instant::now());
     }
-
 
     pub fn on_tick(&mut self) {
         if self.show_option_notification || self.show_mode_notification {

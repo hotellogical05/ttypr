@@ -1,13 +1,13 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
-use ttypr::{gen_random_ascii_char, read_words_from_file, gen_one_line_of_words};
+use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_words_from_file, save_config, Config};
 
 mod app;
 mod ui;
 use crate::{
     app::{App, CurrentMode, CurrentTypingMode},
-    ui::{render, draw_on_clear},
+    ui::{draw_on_clear, render},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -21,6 +21,11 @@ fn main() -> color_eyre::Result<()> {
 
 // Run the application's main loop
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
+    // Load config file or create it
+    app.config = Some(load_config().unwrap_or_else(|_err| {
+        Config::default()
+    }));
+
     // (For the ASCII option) - Generate initial random charset and all ids set to 0
     // (This for block is here because the default typing option is Ascii)
     for _ in 0..app.line_len*3 {
@@ -34,8 +39,13 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         Err(_) => { vec![] }
     };
     
-    while app.running {
+    // Keep in first boot screen until Enter is pressed
+    while app.config.as_ref().unwrap().first_boot {
+        terminal.draw(|frame| render(frame, app))?; // Draw the ui
+        app.handle_crossterm_events()?; // Read terminal events
+    }
 
+    while app.running {
         // Timer for notifications diplay
         app.on_tick();
 
@@ -155,6 +165,22 @@ impl App {
 
     // What happens on key presses
     fn on_key_event(&mut self, key: KeyEvent) {
+        // If first boot only handle the Enter key and run the according logic
+        if self.config.as_ref().unwrap().first_boot {
+            match key.code {
+                KeyCode::Enter => {
+                    self.config.as_mut().unwrap().first_boot = false;
+                    if let Some(config) = &self.config {
+                        save_config(config).unwrap_or_else(|err| {
+                            eprintln!("Failed to save config: {}", err);
+                        });
+                    }
+                }
+                _ => {}
+            }
+            return;
+        }
+
         // What mode is currently selected Menu or Typing
         match self.current_mode {
             CurrentMode::Menu => {

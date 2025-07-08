@@ -1,6 +1,6 @@
 [package]
 name = "ttypr"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 description = "terminal typing practice"
 license = "MIT"
@@ -13,3 +13,5 @@ crossterm = "0.28.1"
 color-eyre = "0.6.4"
 rand = "0.9.1"
 home = "0.5.9"
+serde = { version = "1.0.219", features = ["derive"] }
+toml = "0.8.23"

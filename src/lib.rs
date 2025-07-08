@@ -1,5 +1,20 @@
 use std::{io, fs};
 use rand::Rng;
+use serde::{Serialize, Deserialize};
+
+// Config struct to store all config values, is a part of the App struct
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+    pub first_boot: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self { 
+            first_boot: true, 
+        }
+    }
+}
 
 // Generate a random ascii character
 pub fn gen_random_ascii_char() -> String {
@@ -8,7 +23,44 @@ pub fn gen_random_ascii_char() -> String {
     let character = charset[index];
     character.to_string()
 }
-    
+
+pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
+    // Get the home directory path
+    let home_path = home::home_dir().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::NotFound, "Home directory not found")
+    })?;
+
+    // Construct the full path to the config file
+    let config_path = home_path.join(".config/ttypr/config");
+
+    // Create the directory if it doesn't exist
+    fs::create_dir_all(".config/ttypr")?;
+
+    // Check if file exists
+    if !config_path.exists() {
+        // If not, create it with default values
+        let default_config = Config::default();
+        let toml_string = toml::to_string_pretty(&default_config)?;
+        fs::write(&config_path, toml_string)?;
+        return Ok(default_config);
+    }
+
+    // If it does exist, read, parse and return it
+    let config_string = fs::read_to_string(config_path)?;
+    let config: Config = toml::from_str(&config_string)?;
+    Ok(config)
+}
+
+pub fn save_config(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    let home_path = home::home_dir().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::NotFound, "Home directory not found")
+    })?;
+    let config_path = home_path.join(".config/ttypr/config");
+    let toml_string = toml::to_string_pretty(config)?;
+    fs::write(config_path, toml_string)?;
+    Ok(())
+}
+
 pub fn read_words_from_file() -> io::Result<Vec<String>> {
     // Get the home directory path
     let home_path = home::home_dir().ok_or_else(|| {

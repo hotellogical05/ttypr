@@ -10,6 +10,47 @@ use ratatui::{
 
 // Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
+
+    if app.config.as_ref().unwrap().first_boot {
+        let first_boot_message_area = center(
+            frame.area(),
+            Constraint::Length(60),
+            Constraint::Length(20),
+        );
+
+        let first_boot_message = vec![
+//            Line::from("You can access this page any time by pressing \"h\".").alignment(Alignment::Center),
+            Line::from(""),
+            Line::from("The application starts in the Menu mode.").alignment(Alignment::Center),
+            Line::from(""),
+            Line::from(""),
+            Line::from("Menu mode:").alignment(Alignment::Center),
+            Line::from(""),
+            Line::from("            q - exit the application"),
+            Line::from("            i - switch to Typing mode"),
+            Line::from("            m - switch Typing option (ASCII, Words)"),
+            Line::from(""),
+            Line::from(""),
+            Line::from("Typing mode:").alignment(Alignment::Center),
+            Line::from(""),
+            Line::from("            ESC - switch to Menu mode"),
+            Line::from(""),
+            Line::from(""),
+            Line::from(""),
+            Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+        ];
+
+        let first_boot_message: Vec<_> = first_boot_message
+            .into_iter()
+            .map(ListItem::new)
+            .collect();
+
+        let first_boot_message = List::new(first_boot_message);
+        frame.render_widget(first_boot_message, first_boot_message_area);
+
+        return;
+    }
+
     // Where to display the lines
     let area = center(
         frame.area(), // The area of the entire frame
