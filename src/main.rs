@@ -184,8 +184,27 @@ impl App {
         // What mode is currently selected Menu or Typing
         match self.current_mode {
             CurrentMode::Menu => {
+                // Help page input (if toggled takes all input)
+                if self.show_help {
+                    match key.code {
+                        KeyCode::Enter => {
+                            self.show_help = false;
+                            self.needs_clear = true;
+                            self.needs_redraw = true;
+                        }
+                        _ => {}
+                    }
+                    return; // Stop here
+                }
+
+                // Menu mode input
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
+                    KeyCode::Char('h') => {
+                        self.show_help = true; 
+                        self.needs_clear = true;
+                        self.needs_redraw = true;
+                    }
                     KeyCode::Char('m') => { 
                         self.needs_clear = true;
                         self.show_option_notification();

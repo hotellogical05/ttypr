@@ -20,6 +20,7 @@ pub struct App {
     pub show_option_notification: bool,
     pub notification_time_count: Option<Instant>,
     pub config: Option<Config>,
+    pub show_help: bool,
 }
 
 pub enum CurrentMode {
@@ -52,6 +53,7 @@ impl App {
             show_option_notification: false,
             notification_time_count: None,
             config: None,
+            show_help: false,
         }
     }
 

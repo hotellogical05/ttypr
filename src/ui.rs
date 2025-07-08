@@ -10,8 +10,8 @@ use ratatui::{
 
 // Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
-
-    if app.config.as_ref().unwrap().first_boot {
+    // If first boot or the help page toggled display only this
+    if app.config.as_ref().unwrap().first_boot || app.show_help {
         let first_boot_message_area = center(
             frame.area(),
             Constraint::Length(60),
@@ -19,13 +19,12 @@ pub fn render(frame: &mut Frame, app: &App) {
         );
 
         let first_boot_message = vec![
-//            Line::from("You can access this page any time by pressing \"h\".").alignment(Alignment::Center),
-            Line::from(""),
             Line::from("The application starts in the Menu mode.").alignment(Alignment::Center),
             Line::from(""),
             Line::from(""),
             Line::from("Menu mode:").alignment(Alignment::Center),
             Line::from(""),
+            Line::from("            h - access the help page"),
             Line::from("            q - exit the application"),
             Line::from("            i - switch to Typing mode"),
             Line::from("            m - switch Typing option (ASCII, Words)"),
