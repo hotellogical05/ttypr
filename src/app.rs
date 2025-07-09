@@ -18,6 +18,7 @@ pub struct App {
     pub words: Vec<String>,
     pub show_mode_notification: bool,
     pub show_option_notification: bool,
+    pub show_notification_toggle: bool,
     pub notification_time_count: Option<Instant>,
     pub config: Option<Config>,
     pub show_help: bool,
@@ -51,6 +52,7 @@ impl App {
             words: vec![],
             show_mode_notification: false,
             show_option_notification: false,
+            show_notification_toggle: false,
             notification_time_count: None,
             config: None,
             show_help: false,
@@ -60,6 +62,10 @@ impl App {
     // Stop the application
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    pub fn show_notification_toggle(&mut self) {
+        self.notification_time_count = Some(Instant::now());
     }
 
     pub fn show_mode_notification(&mut self) {
@@ -73,11 +79,12 @@ impl App {
     }
 
     pub fn on_tick(&mut self) {
-        if self.show_option_notification || self.show_mode_notification {
+        if self.show_option_notification || self.show_mode_notification || self.show_notification_toggle {
             if let Some(shown_at) = self.notification_time_count {
                 if shown_at.elapsed() > Duration::from_secs(2) {
                     self.show_option_notification = false;
                     self.show_mode_notification = false;
+                    self.show_notification_toggle = false;
                     self.notification_time_count = None;
                     self.needs_clear = true;
                     self.needs_redraw = true;

@@ -192,6 +192,11 @@ impl App {
                             self.needs_clear = true;
                             self.needs_redraw = true;
                         }
+                        KeyCode::Char('h') => {
+                            self.show_help = false;
+                            self.needs_clear = true;
+                            self.needs_redraw = true;
+                        }
                         _ => {}
                     }
                     return; // Stop here
@@ -200,12 +205,28 @@ impl App {
                 // Menu mode input
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
-                    KeyCode::Char('h') => {
+                    KeyCode::Char('n') => { // Notifications display toggle
+                        self.show_notification_toggle = true;
+                        if self.config.as_ref().unwrap().show_notifications {
+                            self.config.as_mut().unwrap().show_notifications = false;
+                        } else {
+                            self.config.as_mut().unwrap().show_notifications = true;
+                        }
+                        if let Some(config) = &self.config {
+                            save_config(config).unwrap_or_else(|err| {
+                                eprintln!("Failed to save config: {}", err);
+                            });
+                        }
+                        self.needs_clear = true;
+                        self.needs_redraw = true;
+                        self.show_notification_toggle();
+                    }
+                    KeyCode::Char('h') => { // Display help menu toggle
                         self.show_help = true; 
                         self.needs_clear = true;
                         self.needs_redraw = true;
                     }
-                    KeyCode::Char('m') => { 
+                    KeyCode::Char('o') => { // Typing option switch (ASCII, Words)
                         self.needs_clear = true;
                         self.show_option_notification();
                         match self.current_typing_mode {

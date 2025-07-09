@@ -20,9 +20,11 @@ cargo install ttypr
 
 **Menu mode:**
 
+- **h** - display the help page
 - **q** - exit the application
 - **i** - switch to Typing mode
-- **m** - switch Typing option (ASCII, Words)
+- **o** - switch Typing option (ASCII, Words)
+- **n** - toggle notifications
 
 **Typing mode:**
 

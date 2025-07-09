@@ -6,12 +6,14 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub first_boot: bool,
+    pub show_notifications: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self { 
             first_boot: true, 
+            show_notifications: true,
         }
     }
 }

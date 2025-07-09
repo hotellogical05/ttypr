@@ -27,7 +27,8 @@ pub fn render(frame: &mut Frame, app: &App) {
             Line::from("            h - access the help page"),
             Line::from("            q - exit the application"),
             Line::from("            i - switch to Typing mode"),
-            Line::from("            m - switch Typing option (ASCII, Words)"),
+            Line::from("            o - switch Typing option (ASCII, Words)"),
+            Line::from("            n - toggle notifications"),
             Line::from(""),
             Line::from(""),
             Line::from("Typing mode:").alignment(Alignment::Center),
@@ -57,8 +58,34 @@ pub fn render(frame: &mut Frame, app: &App) {
         Constraint::Length(5), // Height, 5 - because spaces between them
     );
 
+    // Notification toggle display
+    if app.show_notification_toggle {
+        let notification_toggle_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Min(0),
+            ]).split(frame.area());
+        let notification_toggle_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Length(25),
+                Constraint::Min(0),
+            ]).split(notification_toggle_area[1]);
+
+        let notifications_on = Line::from(vec![Span::from("  Notifications "), Span::styled("on", Style::new().fg(Color::Green))]).alignment(Alignment::Left);
+        let notifications_off = Line::from(vec![Span::from("  Notifications "), Span::styled("off", Style::new().fg(Color::Red))]).alignment(Alignment::Left);
+
+        if app.config.as_ref().unwrap().show_notifications {
+            frame.render_widget(notifications_on, notification_toggle_area[0]);
+        } else {
+            frame.render_widget(notifications_off, notification_toggle_area[0]);
+        }
+    }
+
     // Typing mode selection display (Menu, Typing)
-    if app.show_mode_notification {
+    if app.show_mode_notification && app.config.as_ref().unwrap().show_notifications {
         let mode_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -78,7 +105,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
     
     // Typing option selection display (Ascii, Words)
-    if app.show_option_notification {
+    if app.show_option_notification && app.config.as_ref().unwrap().show_notifications {
         let option_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -147,6 +174,7 @@ pub fn render(frame: &mut Frame, app: &App) {
             frame.render_widget(list, area);
         }
         CurrentTypingMode::Words => {
+            // If no words file provided
             if app.words.len() == 0 {
                 let area = center(
                     frame.area(),
