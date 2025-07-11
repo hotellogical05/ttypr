@@ -2,6 +2,25 @@ use std::{collections::HashMap, fs, io};
 use rand::Rng;
 use serde::{ser::SerializeMap, Serialize, Deserialize, Serializer};
 
+// Config struct to store all config values, is a part of the App struct
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+    pub first_boot: bool,
+    pub show_notifications: bool,
+    #[serde(serialize_with = "serialize_sorted_by_value")]
+    pub mistyped_chars: HashMap<String, usize>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self { 
+            first_boot: true, 
+            show_notifications: true,
+            mistyped_chars: HashMap::new(),
+        }
+    }
+}
+
 /// Takes a map of mistyped characters and returns them as a list
 /// sorted by count (descending) and then character (ascending).
 pub fn get_sorted_mistakes(map: &HashMap<String, usize>) -> Vec<(&String, &usize)> {
@@ -25,25 +44,6 @@ where
         map_serializer.serialize_entry(key, value)?;
     }
     map_serializer.end()
-}
-
-// Config struct to store all config values, is a part of the App struct
-#[derive(Serialize, Deserialize)]
-pub struct Config {
-    pub first_boot: bool,
-    pub show_notifications: bool,
-    #[serde(serialize_with = "serialize_sorted_by_value")]
-    pub mistyped_chars: HashMap<String, usize>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self { 
-            first_boot: true, 
-            show_notifications: true,
-            mistyped_chars: HashMap::new(),
-        }
-    }
 }
 
 // Generate a random ascii character

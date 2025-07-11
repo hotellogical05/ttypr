@@ -16,14 +16,14 @@ fn main() -> color_eyre::Result<()> {
     let mut app = App::new();
     let result = run(terminal, &mut app);
 
-    // Save config before exiting
+    // Save config (for mistyped characters) before exiting
     if let Some(config) = &app.config {
         save_config(config).unwrap_or_else(|err| {
             eprintln!("Failed to save config: {}", err);
         });
     }
 
-    // Restore the terminal and then handle the result from `run`
+    // Restore the terminal and return the result from run()
     ratatui::restore();
     result
 }
