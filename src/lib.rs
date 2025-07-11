@@ -1,12 +1,39 @@
-use std::{io, fs};
+use std::{collections::HashMap, fs, io};
 use rand::Rng;
-use serde::{Serialize, Deserialize};
+use serde::{ser::SerializeMap, Serialize, Deserialize, Serializer};
+
+/// Takes a map of mistyped characters and returns them as a list
+/// sorted by count (descending) and then character (ascending).
+pub fn get_sorted_mistakes(map: &HashMap<String, usize>) -> Vec<(&String, &usize)> {
+    let mut sorted: Vec<_> = map.iter().collect();
+    // Sort by value (count) descending, then by key (char) ascending for ties.
+    sorted.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
+    sorted
+}
+
+// Custom serializer that uses the reusable sorting logic
+fn serialize_sorted_by_value<S>(
+    map: &HashMap<String, usize>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let sorted = get_sorted_mistakes(map);
+    let mut map_serializer = serializer.serialize_map(Some(sorted.len()))?;
+    for (key, value) in sorted {
+        map_serializer.serialize_entry(key, value)?;
+    }
+    map_serializer.end()
+}
 
 // Config struct to store all config values, is a part of the App struct
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub first_boot: bool,
     pub show_notifications: bool,
+    #[serde(serialize_with = "serialize_sorted_by_value")]
+    pub mistyped_chars: HashMap<String, usize>,
 }
 
 impl Default for Config {
@@ -14,6 +41,7 @@ impl Default for Config {
         Self { 
             first_boot: true, 
             show_notifications: true,
+            mistyped_chars: HashMap::new(),
         }
     }
 }
@@ -36,7 +64,7 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     let config_path = home_path.join(".config/ttypr/config");
 
     // Create the directory if it doesn't exist
-    fs::create_dir_all(".config/ttypr")?;
+    fs::create_dir_all(home_path.join(".config/ttypr/"))?;
 
     // Check if file exists
     if !config_path.exists() {

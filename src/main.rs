@@ -15,6 +15,15 @@ fn main() -> color_eyre::Result<()> {
     let terminal = ratatui::init();
     let mut app = App::new();
     let result = run(terminal, &mut app);
+
+    // Save config before exiting
+    if let Some(config) = &app.config {
+        save_config(config).unwrap_or_else(|err| {
+            eprintln!("Failed to save config: {}", err);
+        });
+    }
+
+    // Restore the terminal and then handle the result from `run`
     ratatui::restore();
     result
 }
@@ -74,6 +83,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                     app.ids[pos] = 1;
                                 } else {
                                     app.ids[pos] = 2;
+                                    
+                                    let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
+                                    *count += 1;
                                 }
                             
                                 // If reached the end of the second line, remove line_len
@@ -106,6 +118,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                         app.ids[pos] = 1;
                                     } else {
                                         app.ids[pos] = 2;
+                                        
+                                        let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
+                                        *count += 1;
                                     }
 
                                     // If reached the end of the second line, remove first line amount
