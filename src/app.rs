@@ -66,19 +66,6 @@ impl App {
         self.running = false;
     }
 
-    pub fn show_notification_toggle(&mut self) {
-        self.notification_time_count = Some(Instant::now());
-    }
-
-    pub fn show_mode_notification(&mut self) {
-        self.show_mode_notification = true;
-        self.notification_time_count = Some(Instant::now());
-    }
-
-    pub fn show_option_notification(&mut self) {
-        self.show_option_notification = true;
-        self.notification_time_count = Some(Instant::now());
-    }
 
     pub fn on_tick(&mut self) {
         if self.show_option_notification || self.show_mode_notification || self.show_notification_toggle || self.show_mistyped_notification {

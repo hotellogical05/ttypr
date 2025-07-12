@@ -245,7 +245,7 @@ impl App {
                         self.show_notification_toggle = true;
                         self.needs_clear = true;
                         self.needs_redraw = true;
-                        self.show_notification_toggle();
+                        self.notification_time_count = Some(Instant::now());
                     }
                     KeyCode::Char('h') => { // Display help menu toggle
                         self.show_help = true; 
@@ -254,7 +254,8 @@ impl App {
                     }
                     KeyCode::Char('o') => { // Typing option switch (ASCII, Words)
                         self.needs_clear = true;
-                        self.show_option_notification();
+                        self.show_option_notification = true;
+                        self.notification_time_count = Some(Instant::now());
                         match self.current_typing_mode {
                             // If switched to Words typing option - clear charset, input_chars
                             // and ids. Afterward - generate new words charset.
@@ -301,7 +302,8 @@ impl App {
                     }
                     KeyCode::Char('i') => { 
                         self.current_mode = CurrentMode::Typing;
-                        self.show_mode_notification();
+                        self.show_mode_notification = true;
+                        self.notification_time_count = Some(Instant::now());
                         self.needs_redraw = true;
                     },
                     // If Enter pressed in the Words typing option, with no words file provided - create the default one.
@@ -342,7 +344,8 @@ impl App {
                         match key.code {
                             KeyCode::Esc => { // Switch to Menu mode if ESC pressed
                                 self.current_mode = CurrentMode::Menu; 
-                                self.show_mode_notification();
+                                self.show_mode_notification = true;
+                                self.notification_time_count = Some(Instant::now());
                                 self.needs_redraw = true;
                             },
                             KeyCode::Char(c) => {
@@ -365,7 +368,8 @@ impl App {
                         match key.code {
                             KeyCode::Esc => { // Switch to Menu mode if ESC pressed
                                 self.current_mode = CurrentMode::Menu;
-                                self.show_mode_notification();
+                                self.show_mode_notification = true;
+                                self.notification_time_count = Some(Instant::now());
                                 self.needs_redraw = true;
                             },
                             KeyCode::Char(c) => {
