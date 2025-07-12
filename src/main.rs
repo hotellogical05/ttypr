@@ -1,6 +1,7 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
+use std::time::Instant;
 use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_words_from_file, save_config, Config};
 
 mod app;
@@ -84,8 +85,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                 } else {
                                     app.ids[pos] = 2;
                                     
-                                    let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
-                                    *count += 1;
+                                    if app.config.as_ref().unwrap().save_mistyped {
+                                        let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
+                                        *count += 1;
+                                    }
                                 }
                             
                                 // If reached the end of the second line, remove line_len
@@ -119,8 +122,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                     } else {
                                         app.ids[pos] = 2;
                                         
-                                        let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
-                                        *count += 1;
+                                        if app.config.as_ref().unwrap().save_mistyped {
+                                            let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
+                                            *count += 1;
+                                        }
                                     }
 
                                     // If reached the end of the second line, remove first line amount
@@ -220,18 +225,24 @@ impl App {
                 // Menu mode input
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
+                    KeyCode::Char('c') => {
+                        if self.config.as_ref().unwrap().save_mistyped {
+                            self.config.as_mut().unwrap().save_mistyped = false;
+                        } else {
+                            self.config.as_mut().unwrap().save_mistyped = true;
+                        }
+                        self.show_mistyped_notification = true;
+                        self.needs_clear = true;
+                        self.needs_redraw = true;
+                        self.notification_time_count = Some(Instant::now());
+                    }
                     KeyCode::Char('n') => { // Notifications display toggle
-                        self.show_notification_toggle = true;
                         if self.config.as_ref().unwrap().show_notifications {
                             self.config.as_mut().unwrap().show_notifications = false;
                         } else {
                             self.config.as_mut().unwrap().show_notifications = true;
                         }
-                        if let Some(config) = &self.config {
-                            save_config(config).unwrap_or_else(|err| {
-                                eprintln!("Failed to save config: {}", err);
-                            });
-                        }
+                        self.show_notification_toggle = true;
                         self.needs_clear = true;
                         self.needs_redraw = true;
                         self.show_notification_toggle();

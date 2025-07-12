@@ -58,6 +58,26 @@ pub fn render(frame: &mut Frame, app: &App) {
         Constraint::Length(5), // Height, 5 - because spaces between them
     );
 
+    // Mistyped characters count toggle display
+    if app.show_mistyped_notification && app.config.as_ref().unwrap().show_notifications {
+        let mistyped_chars_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(70),
+                Constraint::Percentage(10),
+                Constraint::Percentage(20),
+            ]).split(frame.area());
+
+        let mistyped_chars_on = Line::from(vec![Span::from("  Counting mistyped characters "), Span::styled("on", Style::new().fg(Color::Green))]).alignment(Alignment::Center);
+        let mistyped_chars_off = Line::from(vec![Span::from("  Counting mistyped characters "), Span::styled("off", Style::new().fg(Color::Red))]).alignment(Alignment::Center);
+
+        if app.config.as_ref().unwrap().save_mistyped {
+            frame.render_widget(mistyped_chars_on, mistyped_chars_area[1]);
+        } else {
+            frame.render_widget(mistyped_chars_off, mistyped_chars_area[1]);
+        }
+    }
+
     // Notification toggle display
     if app.show_notification_toggle {
         let notification_toggle_area = Layout::default()
