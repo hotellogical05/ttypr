@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_words_from_file, save_config, Config};
 
 mod app;
@@ -243,6 +243,12 @@ impl App {
                 // Menu mode input
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
+                    KeyCode::Char('r') => {
+                        self.config.as_mut().unwrap().mistyped_chars = HashMap::new();
+                        self.show_clear_mistyped_notification = true;
+                        self.needs_redraw = true;
+                        self.notification_time_count = Some(Instant::now());
+                    }
                     KeyCode::Char('w') => {
                         self.show_mistyped = true;
                         self.needs_clear = true;
@@ -334,12 +340,14 @@ impl App {
                         match self.current_typing_mode {
                             CurrentTypingMode::Words => {
                                 if self.words.len() == 0 {
+                                    // Generate three lines of words, charset[_, 100+] and lines_len[_, _, _]
                                     let default_words = vec!["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "over", "think", "also", "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us", "thing", "man", "find", "part", "eye", "place", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "leave", "while", "mean", "keep", "student", "great", "seem", "same", "tell", "begin", "help", "talk", "where", "turn", "start", "might", "show", "hear", "play", "run", "move", "live", "believe", "hold", "bring", "happen", "must", "write", "provide", "sit", "stand", "lose", "pay", "meet", "include", "continue", "set", "learn", "change", "lead", "understand", "watch", "follow", "stop", "create", "speak", "read", "allow", "add", "spend", "grow", "open", "walk", "win", "offer", "remember", "love", "consider", "appear", "buy", "wait", "serve", "die", "send", "expect", "build", "stay", "fall", "cut", "reach", "kill", "remain", "suggest", "raise", "pass", "sell", "require", "report", "decide", "pull", "return", "explain", "hope", "develop", "carry", "break", "receive", "agree", "support", "hit", "produce", "eat", "cover", "catch", "draw", "choose", "cause", "listen", "maybe", "until", "without", "probably", "around", "small", "green", "special", "difficult", "available", "likely", "short", "single", "medical", "current", "wrong", "private", "past", "foreign", "fine", "common", "poor", "natural", "significant", "similar", "hot", "dead", "central", "happy", "serious", "ready", "simple", "left", "physical", "general", "environmental", "financial", "blue", "democratic", "dark", "various", "entire", "close", "legal", "religious", "cold", "final", "main", "huge", "popular", "traditional", "cultural", "choice", "high", "big", "large", "particular", "tiny", "enormous"];
                                     let default_words: Vec<String> = default_words
                                         .iter()
                                         .map(|w| w.to_string())
                                         .collect();
                                     self.words = default_words;
+
                                     for _ in 0..3 {
                                         let one_line = gen_one_line_of_words(self.line_len, &self.words);
                                         let characters: Vec<char> = one_line.chars().collect();
@@ -349,15 +357,13 @@ impl App {
                                             self.ids.push_back(0);
                                         }
                                     }
+
                                     self.needs_redraw = true;
                                 }
                                 else {}
                             }
                             _ => {}
                         }
-                        // * to if len = 0 match block ?
-                        // * if len = 0 don't do anything besides this, don't take any input besides Enter
-                        // Generate three lines of words, charset[_, 100+] and lines_len[_, _, _]
                     }
                     _ => {}
                 }

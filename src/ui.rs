@@ -97,6 +97,19 @@ pub fn render(frame: &mut Frame, app: &App) {
         Constraint::Length(5), // Height, 5 - because spaces between them
     );
 
+    // Cleared mistyped characters count display
+    if app.show_clear_mistyped_notification && app.config.as_ref().unwrap().show_notifications {
+        let clear_mistyped_notification_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(65),
+                Constraint::Percentage(10),
+                Constraint::Percentage(25),
+            ]).split(frame.area());
+        
+        frame.render_widget(Line::from("Cleared mistyped characters count").alignment(Alignment::Center), clear_mistyped_notification_area[1]);
+    }
+
     // Mistyped characters count toggle display
     if app.show_mistyped_notification && app.config.as_ref().unwrap().show_notifications {
         let mistyped_chars_area = Layout::default()

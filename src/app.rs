@@ -20,6 +20,7 @@ pub struct App {
     pub show_option_notification: bool,
     pub show_notification_toggle: bool,
     pub show_mistyped_notification: bool,
+    pub show_clear_mistyped_notification: bool,
     pub notification_time_count: Option<Instant>,
     pub config: Option<Config>,
     pub show_help: bool,
@@ -56,6 +57,7 @@ impl App {
             show_option_notification: false,
             show_notification_toggle: false,
             show_mistyped_notification: false,
+            show_clear_mistyped_notification: false,
             notification_time_count: None,
             config: None,
             show_help: false,
@@ -70,13 +72,14 @@ impl App {
 
 
     pub fn on_tick(&mut self) {
-        if self.show_option_notification || self.show_mode_notification || self.show_notification_toggle || self.show_mistyped_notification {
+        if self.show_option_notification || self.show_mode_notification || self.show_notification_toggle || self.show_mistyped_notification || self.show_clear_mistyped_notification {
             if let Some(shown_at) = self.notification_time_count {
                 if shown_at.elapsed() > Duration::from_secs(2) {
                     self.show_option_notification = false;
                     self.show_mode_notification = false;
                     self.show_notification_toggle = false;
                     self.show_mistyped_notification = false;
+                    self.show_clear_mistyped_notification = false;
                     self.notification_time_count = None;
                     self.needs_clear = true;
                     self.needs_redraw = true;
