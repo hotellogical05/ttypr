@@ -7,6 +7,7 @@ use ratatui::{
     widgets::{Clear, List, ListItem}, 
     Frame
 };
+use ttypr::get_sorted_mistakes;
 
 // Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
@@ -48,6 +49,44 @@ pub fn render(frame: &mut Frame, app: &App) {
         let first_boot_message = List::new(first_boot_message);
         frame.render_widget(first_boot_message, first_boot_message_area);
 
+        return;
+    }
+
+    // Most mistyped characters display
+    if app.show_mistyped {
+        let sorted_mistakes = get_sorted_mistakes(&app.config.as_ref().unwrap().mistyped_chars);
+        let sorted_mistakes: Vec<(String, usize)> = sorted_mistakes.iter().take(15).map(|(k, v)| (k.to_string(), **v)).collect();
+
+        let mut mistake_lines: Vec<ListItem> = vec![];
+
+        let mistyped_title = vec![
+            ListItem::new(Line::from("Most mistyped characters")),
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from("")),
+        ];
+        for item in mistyped_title { mistake_lines.push(item) }
+
+        for (mistake, count) in sorted_mistakes {
+            let line = Line::from(format!("{}: {}", mistake, count)).alignment(Alignment::Center);
+            mistake_lines.push(ListItem::new(line));
+        }
+
+        let enter_button = vec![
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from("")),
+            ListItem::new(Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)),
+        ];
+        for item in enter_button { mistake_lines.push(item) }
+
+        let mistakes_area = center(
+            frame.area(),
+            Constraint::Length(25),
+            Constraint::Length(25),
+        );
+
+        let list = List::new(mistake_lines);
+        frame.render_widget(list, mistakes_area);
         return;
     }
 
@@ -173,6 +212,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         }
     }).collect();
 
+    // Draw the typing area itself
     match app.current_typing_mode {
         CurrentTypingMode::Ascii => {
             // Separating vector of all the colored characters into vector of 3 lines, each line_len long

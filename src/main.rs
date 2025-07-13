@@ -222,9 +222,32 @@ impl App {
                     return; // Stop here
                 }
 
+                // Display most mistyped characters page input
+                if self.show_mistyped {
+                    match key.code {
+                        KeyCode::Enter => {
+                            self.show_mistyped = false;
+                            self.needs_clear = true;
+                            self.needs_redraw = true;
+                        }
+                        KeyCode::Char('w') => {
+                            self.show_mistyped = false;
+                            self.needs_clear = true;
+                            self.needs_redraw = true;
+                        }
+                        _ => {}
+                    }
+                    return;
+                }
+
                 // Menu mode input
                 match key.code {
                     KeyCode::Char('q') => self.quit(),
+                    KeyCode::Char('w') => {
+                        self.show_mistyped = true;
+                        self.needs_clear = true;
+                        self.needs_redraw = true;
+                    }
                     KeyCode::Char('c') => {
                         if self.config.as_ref().unwrap().save_mistyped {
                             self.config.as_mut().unwrap().save_mistyped = false;
@@ -317,22 +340,24 @@ impl App {
                                         .map(|w| w.to_string())
                                         .collect();
                                     self.words = default_words;
+                                    for _ in 0..3 {
+                                        let one_line = gen_one_line_of_words(self.line_len, &self.words);
+                                        let characters: Vec<char> = one_line.chars().collect();
+                                        self.lines_len.push_back(characters.len());
+                                        for char in characters {
+                                            self.charset.push_back(char.to_string());
+                                            self.ids.push_back(0);
+                                        }
+                                    }
                                     self.needs_redraw = true;
                                 }
                                 else {}
                             }
                             _ => {}
                         }
+                        // * to if len = 0 match block ?
+                        // * if len = 0 don't do anything besides this, don't take any input besides Enter
                         // Generate three lines of words, charset[_, 100+] and lines_len[_, _, _]
-                        for _ in 0..3 {
-                            let one_line = gen_one_line_of_words(self.line_len, &self.words);
-                            let characters: Vec<char> = one_line.chars().collect();
-                            self.lines_len.push_back(characters.len());
-                            for char in characters {
-                                self.charset.push_back(char.to_string());
-                                self.ids.push_back(0);
-                            }
-                        }
                     }
                     _ => {}
                 }
