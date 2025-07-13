@@ -25,6 +25,9 @@ cargo install ttypr
 - **i** - switch to Typing mode
 - **o** - switch Typing option (ASCII, Words)
 - **n** - toggle notifications
+- **c** - toggle counting mistyped characters
+- **w** - display top mistyped characters
+- **r** - clear mistyped characters count
 
 **Typing mode:**
 

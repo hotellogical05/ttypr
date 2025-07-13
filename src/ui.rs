@@ -16,7 +16,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         let first_boot_message_area = center(
             frame.area(),
             Constraint::Length(60),
-            Constraint::Length(20),
+            Constraint::Length(25),
         );
 
         let first_boot_message = vec![
@@ -30,6 +30,9 @@ pub fn render(frame: &mut Frame, app: &App) {
             Line::from("            i - switch to Typing mode"),
             Line::from("            o - switch Typing option (ASCII, Words)"),
             Line::from("            n - toggle notifications"),
+            Line::from("            c - toggle counting mistyped characters"),
+            Line::from("            w - display top mistyped characters"),
+            Line::from("            r - clear mistyped characters count"),
             Line::from(""),
             Line::from(""),
             Line::from("Typing mode:").alignment(Alignment::Center),
