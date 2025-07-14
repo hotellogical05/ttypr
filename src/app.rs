@@ -14,7 +14,7 @@ pub struct App {
     pub line_len: usize,
     pub lines_len: VecDeque<usize>, // Current length of lines in characters for the Words option
     pub current_mode: CurrentMode,
-    pub current_typing_mode: CurrentTypingMode,
+    pub current_typing_mode: CurrentTypingOption,
     pub words: Vec<String>,
     pub show_mode_notification: bool,
     pub show_option_notification: bool,
@@ -32,7 +32,7 @@ pub enum CurrentMode {
     Typing,
 }
 
-pub enum CurrentTypingMode {
+pub enum CurrentTypingOption {
     Ascii,
     Words,
 }
@@ -51,7 +51,7 @@ impl App {
             line_len: 40,
             lines_len: VecDeque::new(),
             current_mode: CurrentMode::Menu,
-            current_typing_mode: CurrentTypingMode::Ascii,
+            current_typing_mode: CurrentTypingOption::Ascii,
             words: vec![],
             show_mode_notification: false,
             show_option_notification: false,
@@ -72,7 +72,11 @@ impl App {
 
 
     pub fn on_tick(&mut self) {
-        if self.show_option_notification || self.show_mode_notification || self.show_notification_toggle || self.show_mistyped_notification || self.show_clear_mistyped_notification {
+        if self.show_option_notification || 
+           self.show_mode_notification || 
+           self.show_notification_toggle || 
+           self.show_mistyped_notification || 
+           self.show_clear_mistyped_notification {
             if let Some(shown_at) = self.notification_time_count {
                 if shown_at.elapsed() > Duration::from_secs(2) {
                     self.show_option_notification = false;

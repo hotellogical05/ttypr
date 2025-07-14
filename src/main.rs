@@ -7,7 +7,7 @@ use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_word
 mod app;
 mod ui;
 use crate::{
-    app::{App, CurrentMode, CurrentTypingMode},
+    app::{App, CurrentMode, CurrentTypingOption},
     ui::{draw_on_clear, render},
 };
 
@@ -73,7 +73,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                 CurrentMode::Typing => {
                     // Which typing option is the app currently in? Run logic for it accordingly
                     match app.current_typing_mode {
-                        CurrentTypingMode::Ascii => {
+                        CurrentTypingOption::Ascii => {
                             if app.typed {
                                 // Number of characters the user typed, to compare with the charset
                                 let pos = app.input_chars.len() - 1;
@@ -108,7 +108,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                 app.typed = false;
                             }
                         }
-                        CurrentTypingMode::Words => {
+                        CurrentTypingOption::Words => {
                             if app.words.len() == 0 {}
                             else {
                                 if app.typed {
@@ -288,7 +288,7 @@ impl App {
                         match self.current_typing_mode {
                             // If switched to Words typing option - clear charset, input_chars
                             // and ids. Afterward - generate new words charset.
-                            CurrentTypingMode::Ascii => {
+                            CurrentTypingOption::Ascii => {
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
@@ -309,9 +309,9 @@ impl App {
                                 }
 
                                 // Switch the typing option to Ascii
-                                self.current_typing_mode = CurrentTypingMode::Words 
+                                self.current_typing_mode = CurrentTypingOption::Words 
                             },
-                            CurrentTypingMode::Words => { 
+                            CurrentTypingOption::Words => { 
                                 // If switched to Words typing option - clear charset, input_chars
                                 // and ids. Afterward - generate new words charset.
                                 self.charset.clear();
@@ -325,7 +325,7 @@ impl App {
                                 }
                                 
                                 // Switch the typing option to Ascii
-                                self.current_typing_mode = CurrentTypingMode::Ascii 
+                                self.current_typing_mode = CurrentTypingOption::Ascii 
                             },
                         }
                     }
@@ -338,7 +338,7 @@ impl App {
                     // If Enter pressed in the Words typing option, with no words file provided - create the default one.
                     KeyCode::Enter => { 
                         match self.current_typing_mode {
-                            CurrentTypingMode::Words => {
+                            CurrentTypingOption::Words => {
                                 if self.words.len() == 0 {
                                     // Generate three lines of words, charset[_, 100+] and lines_len[_, _, _]
                                     let default_words = vec!["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "over", "think", "also", "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us", "thing", "man", "find", "part", "eye", "place", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "leave", "while", "mean", "keep", "student", "great", "seem", "same", "tell", "begin", "help", "talk", "where", "turn", "start", "might", "show", "hear", "play", "run", "move", "live", "believe", "hold", "bring", "happen", "must", "write", "provide", "sit", "stand", "lose", "pay", "meet", "include", "continue", "set", "learn", "change", "lead", "understand", "watch", "follow", "stop", "create", "speak", "read", "allow", "add", "spend", "grow", "open", "walk", "win", "offer", "remember", "love", "consider", "appear", "buy", "wait", "serve", "die", "send", "expect", "build", "stay", "fall", "cut", "reach", "kill", "remain", "suggest", "raise", "pass", "sell", "require", "report", "decide", "pull", "return", "explain", "hope", "develop", "carry", "break", "receive", "agree", "support", "hit", "produce", "eat", "cover", "catch", "draw", "choose", "cause", "listen", "maybe", "until", "without", "probably", "around", "small", "green", "special", "difficult", "available", "likely", "short", "single", "medical", "current", "wrong", "private", "past", "foreign", "fine", "common", "poor", "natural", "significant", "similar", "hot", "dead", "central", "happy", "serious", "ready", "simple", "left", "physical", "general", "environmental", "financial", "blue", "democratic", "dark", "various", "entire", "close", "legal", "religious", "cold", "final", "main", "huge", "popular", "traditional", "cultural", "choice", "high", "big", "large", "particular", "tiny", "enormous"];
@@ -371,7 +371,7 @@ impl App {
             // If Typing mode is selected, take actions depending on typing option selected (ASCII, Words)
             CurrentMode::Typing => {
                 match self.current_typing_mode {
-                    CurrentTypingMode::Ascii => {
+                    CurrentTypingOption::Ascii => {
                         match key.code {
                             KeyCode::Esc => { // Switch to Menu mode if ESC pressed
                                 self.current_mode = CurrentMode::Menu; 
@@ -395,7 +395,7 @@ impl App {
                             _ => {}
                         }
                     },
-                    CurrentTypingMode::Words => {
+                    CurrentTypingOption::Words => {
                         match key.code {
                             KeyCode::Esc => { // Switch to Menu mode if ESC pressed
                                 self.current_mode = CurrentMode::Menu;

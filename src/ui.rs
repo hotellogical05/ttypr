@@ -1,4 +1,4 @@
-use crate::app::{App, CurrentMode, CurrentTypingMode};
+use crate::app::{App, CurrentMode, CurrentTypingOption};
 use ratatui::{
     layout::{Alignment, Direction, Flex}, 
     prelude::{Constraint, Layout, Rect}, 
@@ -197,11 +197,11 @@ pub fn render(frame: &mut Frame, app: &App) {
         let mut option_span: Vec<ListItem> = vec![];
 
         match app.current_typing_mode {
-            CurrentTypingMode::Ascii => {
+            CurrentTypingOption::Ascii => {
                 option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::Black).bg(Color::White))));
                 option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::White))));
             }
-            CurrentTypingMode::Words => {
+            CurrentTypingOption::Words => {
                 option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::White))));
                 option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::Black).bg(Color::White))));
             }
@@ -230,7 +230,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Draw the typing area itself
     match app.current_typing_mode {
-        CurrentTypingMode::Ascii => {
+        CurrentTypingOption::Ascii => {
             // Separating vector of all the colored characters into vector of 3 lines, each line_len long
             // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
             let mut three_lines = vec![];
@@ -249,7 +249,7 @@ pub fn render(frame: &mut Frame, app: &App) {
             let list = List::new(three_lines);
             frame.render_widget(list, area);
         }
-        CurrentTypingMode::Words => {
+        CurrentTypingOption::Words => {
             // If no words file provided
             if app.words.len() == 0 {
                 let area = center(
