@@ -71,20 +71,30 @@ impl App {
         self.running = false;
     }
 
-
+    // Timer for notifications display
     pub fn on_tick(&mut self) {
+        // If one of the notifications was triggered -
+        // start counting
         if self.show_option_notification || 
            self.show_mode_notification || 
            self.show_notification_toggle || 
            self.show_mistyped_notification || 
            self.show_clear_mistyped_notification {
+
+            // Pressing a key that triggers a notification sets
+            // notification_time_count to Some()
+            // So the logic below runs
             if let Some(shown_at) = self.notification_time_count {
+                // If two seconds have passed since a notification was triggered
                 if shown_at.elapsed() > Duration::from_secs(2) {
+                    // Set displaying all notifications to false
                     self.show_option_notification = false;
                     self.show_mode_notification = false;
                     self.show_notification_toggle = false;
                     self.show_mistyped_notification = false;
                     self.show_clear_mistyped_notification = false;
+
+                    // Stop the timer, clear and redraw the area
                     self.notification_time_count = None;
                     self.needs_clear = true;
                     self.needs_redraw = true;

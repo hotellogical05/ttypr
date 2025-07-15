@@ -276,8 +276,8 @@ impl App {
                         self.notification_time_count = Some(Instant::now());
                     }
                     
-                    // Toggle notifications
-                    KeyCode::Char('n') => { // Notifications display toggle
+                    // Toggle displaying notifications
+                    KeyCode::Char('n') => {
                         if self.config.as_ref().unwrap().show_notifications {
                             self.config.as_mut().unwrap().show_notifications = false;
                         } else {

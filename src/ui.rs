@@ -307,7 +307,9 @@ pub fn render(frame: &mut Frame, app: &App) {
                 frame.render_widget(list, area);
             }
         }
-        CurrentTypingOption::Text => {}
+        CurrentTypingOption::Text => {
+
+        }
     } 
 }
 
