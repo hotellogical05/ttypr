@@ -156,6 +156,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                                 }
                             }
                         }
+                        CurrentTypingOption::Text => {
+
+                        }
                     }
                 }
             }
@@ -185,7 +188,8 @@ impl App {
 
     // What happens on key presses
     fn on_key_event(&mut self, key: KeyEvent) {
-        // If first boot only handle the Enter key and run the according logic
+        // First boot page (if toggled takes all input)
+        // If Enter key is pressed sets first_boot to false in the config file
         if self.config.as_ref().unwrap().first_boot {
             match key.code {
                 KeyCode::Enter => {
@@ -201,59 +205,65 @@ impl App {
             return;
         }
 
-        // What mode is currently selected Menu or Typing
+        // Help page input (if toggled takes all input)
+        if self.show_help {
+            match key.code {
+                KeyCode::Enter => {
+                    self.show_help = false;
+                    self.needs_clear = true;
+                    self.needs_redraw = true;
+                }
+                KeyCode::Char('h') => {
+                    self.show_help = false;
+                    self.needs_clear = true;
+                    self.needs_redraw = true;
+                }
+                _ => {}
+            }
+            return; // Stop here
+        }
+
+        // Most mistyped page input (if toggled takes all input)
+        if self.show_mistyped {
+            match key.code {
+                KeyCode::Enter => {
+                    self.show_mistyped = false;
+                    self.needs_clear = true;
+                    self.needs_redraw = true;
+                }
+                KeyCode::Char('w') => {
+                    self.show_mistyped = false;
+                    self.needs_clear = true;
+                    self.needs_redraw = true;
+                }
+                _ => {}
+            }
+            return;
+        }
+
         match self.current_mode {
+            // Menu mode input
             CurrentMode::Menu => {
-                // Help page input (if toggled takes all input)
-                if self.show_help {
-                    match key.code {
-                        KeyCode::Enter => {
-                            self.show_help = false;
-                            self.needs_clear = true;
-                            self.needs_redraw = true;
-                        }
-                        KeyCode::Char('h') => {
-                            self.show_help = false;
-                            self.needs_clear = true;
-                            self.needs_redraw = true;
-                        }
-                        _ => {}
-                    }
-                    return; // Stop here
-                }
-
-                // Display most mistyped characters page input
-                if self.show_mistyped {
-                    match key.code {
-                        KeyCode::Enter => {
-                            self.show_mistyped = false;
-                            self.needs_clear = true;
-                            self.needs_redraw = true;
-                        }
-                        KeyCode::Char('w') => {
-                            self.show_mistyped = false;
-                            self.needs_clear = true;
-                            self.needs_redraw = true;
-                        }
-                        _ => {}
-                    }
-                    return;
-                }
-
-                // Menu mode input
                 match key.code {
+                    // Exit the application
                     KeyCode::Char('q') => self.quit(),
+
+                    // Reset mistyped charactes count
                     KeyCode::Char('r') => {
                         self.config.as_mut().unwrap().mistyped_chars = HashMap::new();
                         self.show_clear_mistyped_notification = true;
                         self.needs_redraw = true;
                         self.notification_time_count = Some(Instant::now());
                     }
+
+                    // Show most mistyped page
                     KeyCode::Char('w') => {
                         self.show_mistyped = true;
                         self.needs_clear = true;
                         self.needs_redraw = true;
                     }
+
+                    // Toggle counting mistyped characters
                     KeyCode::Char('c') => {
                         if self.config.as_ref().unwrap().save_mistyped {
                             self.config.as_mut().unwrap().save_mistyped = false;
@@ -265,6 +275,8 @@ impl App {
                         self.needs_redraw = true;
                         self.notification_time_count = Some(Instant::now());
                     }
+                    
+                    // Toggle notifications
                     KeyCode::Char('n') => { // Notifications display toggle
                         if self.config.as_ref().unwrap().show_notifications {
                             self.config.as_mut().unwrap().show_notifications = false;
@@ -276,27 +288,30 @@ impl App {
                         self.needs_redraw = true;
                         self.notification_time_count = Some(Instant::now());
                     }
-                    KeyCode::Char('h') => { // Display help menu toggle
+
+                    // Show help page
+                    KeyCode::Char('h') => {
                         self.show_help = true; 
                         self.needs_clear = true;
                         self.needs_redraw = true;
                     }
-                    KeyCode::Char('o') => { // Typing option switch (ASCII, Words)
+
+                    // Typing option switch (ASCII, Words, Text)
+                    KeyCode::Char('o') => {
                         self.needs_clear = true;
                         self.show_option_notification = true;
                         self.notification_time_count = Some(Instant::now());
+
                         match self.current_typing_mode {
-                            // If switched to Words typing option - clear charset, input_chars
-                            // and ids. Afterward - generate new words charset.
                             CurrentTypingOption::Ascii => {
+                                // Clear charset, input_chars and ids.
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
                                 
                                 if self.words.len() == 0 {}
                                 else {
-                                    // * need similar logic to ascii in the main loop, and similar display logic in ui.rs
-                                    // generate three lines of words, charaset[_, 100+] & lines_len[_, _, _] long
+                                    // Generate three lines of words (charset)
                                     for _ in 0..3 {
                                         let one_line = gen_one_line_of_words(self.line_len, &self.words);
                                         let characters: Vec<char> = one_line.chars().collect();
@@ -308,17 +323,34 @@ impl App {
                                     }
                                 }
 
-                                // Switch the typing option to Ascii
+                                // Switch the typing option to Words
                                 self.current_typing_mode = CurrentTypingOption::Words 
                             },
                             CurrentTypingOption::Words => { 
-                                // If switched to Words typing option - clear charset, input_chars
-                                // and ids. Afterward - generate new words charset.
+                                // Clear charset, input_chars and ids.
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
+
+                                // Clear length of lines
                                 self.lines_len.clear();
                                 
+
+                                // * logic for text option
+
+
+                                // Switch the typing option to Ascii
+                                self.current_typing_mode = CurrentTypingOption::Text
+                            },
+                            CurrentTypingOption::Text => {
+                                // Clear charset, input_chars and ids.
+                                self.charset.clear();
+                                self.input_chars.clear();
+                                self.ids.clear();
+                                // ?
+                                self.lines_len.clear();
+
+                                // Generate three lines worth of characters to charset
                                 for _ in 0..self.line_len*3 {
                                     self.charset.push_back(gen_random_ascii_char());
                                     self.ids.push_back(0);
@@ -326,16 +358,20 @@ impl App {
                                 
                                 // Switch the typing option to Ascii
                                 self.current_typing_mode = CurrentTypingOption::Ascii 
-                            },
+                            }
                         }
                     }
+
+                    // Switch to Typing mode
                     KeyCode::Char('i') => { 
                         self.current_mode = CurrentMode::Typing;
                         self.show_mode_notification = true;
                         self.notification_time_count = Some(Instant::now());
                         self.needs_redraw = true;
                     },
-                    // If Enter pressed in the Words typing option, with no words file provided - create the default one.
+
+                    // If Enter pressed in the Words typing option, 
+                    // with no words file provided - create the default one.
                     KeyCode::Enter => { 
                         match self.current_typing_mode {
                             CurrentTypingOption::Words => {
@@ -368,57 +404,30 @@ impl App {
                     _ => {}
                 }
             },
-            // If Typing mode is selected, take actions depending on typing option selected (ASCII, Words)
+
+            // Typing mode input
             CurrentMode::Typing => {
-                match self.current_typing_mode {
-                    CurrentTypingOption::Ascii => {
-                        match key.code {
-                            KeyCode::Esc => { // Switch to Menu mode if ESC pressed
-                                self.current_mode = CurrentMode::Menu; 
-                                self.show_mode_notification = true;
-                                self.notification_time_count = Some(Instant::now());
-                                self.needs_redraw = true;
-                            },
-                            KeyCode::Char(c) => {
-                                self.input_chars.push_back(c.to_string()); // Add to input characters
-                                self.needs_redraw = true;
-                                self.typed = true;
-                            }
-                            KeyCode::Backspace => {
-                                let position = self.input_chars.len();
-                                if position > 0 { // If there are no input characters - don't do anything
-                                    self.input_chars.pop_back();
-                                    self.ids[position-1] = 0;
-                                    self.needs_redraw = true;
-                                }
-                            }
-                            _ => {}
-                        }
+                match key.code {
+                    KeyCode::Esc => { // Switch to Menu mode if ESC pressed
+                        self.current_mode = CurrentMode::Menu;
+                        self.show_mode_notification = true;
+                        self.notification_time_count = Some(Instant::now());
+                        self.needs_redraw = true;
                     },
-                    CurrentTypingOption::Words => {
-                        match key.code {
-                            KeyCode::Esc => { // Switch to Menu mode if ESC pressed
-                                self.current_mode = CurrentMode::Menu;
-                                self.show_mode_notification = true;
-                                self.notification_time_count = Some(Instant::now());
-                                self.needs_redraw = true;
-                            },
-                            KeyCode::Char(c) => {
-                                self.input_chars.push_back(c.to_string()); // Add to input characters
-                                self.needs_redraw = true;
-                                self.typed = true;
-                            }
-                            KeyCode::Backspace => {
-                                let position = self.input_chars.len();
-                                if position > 0 { // If there are no input characters - don't do anything
-                                    self.input_chars.pop_back();
-                                    self.ids[position-1] = 0;
-                                    self.needs_redraw = true;
-                                }
-                            }
-                            _ => {}
+                    KeyCode::Char(c) => { // Add to input characters
+                        self.input_chars.push_back(c.to_string());
+                        self.needs_redraw = true;
+                        self.typed = true;
+                    }
+                    KeyCode::Backspace => { // Remove from input characters
+                        let position = self.input_chars.len();
+                        if position > 0 { // If there are no input characters - don't do anything
+                            self.input_chars.pop_back();
+                            self.ids[position-1] = 0;
+                            self.needs_redraw = true;
                         }
-                    },
+                    }
+                    _ => {}
                 }
             }
         }

@@ -35,6 +35,7 @@ pub enum CurrentMode {
 pub enum CurrentTypingOption {
     Ascii,
     Words,
+    Text,
 }
 
 impl App {

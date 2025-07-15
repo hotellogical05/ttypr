@@ -179,7 +179,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         }
     }
     
-    // Typing option selection display (Ascii, Words)
+    // Typing option selection display (Ascii, Words, Text)
     if app.show_option_notification && app.config.as_ref().unwrap().show_notifications {
         let option_area = Layout::default()
             .direction(Direction::Vertical)
@@ -200,10 +200,17 @@ pub fn render(frame: &mut Frame, app: &App) {
             CurrentTypingOption::Ascii => {
                 option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::Black).bg(Color::White))));
                 option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Text", Style::new().fg(Color::White))));
             }
             CurrentTypingOption::Words => {
                 option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::White))));
                 option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::Black).bg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Text", Style::new().fg(Color::White))));
+            }
+            CurrentTypingOption::Text => {
+                option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::White))));
+                option_span.push(ListItem::new(Span::styled("Text", Style::new().fg(Color::Black).bg(Color::White))));
             }
         }
         
@@ -300,6 +307,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                 frame.render_widget(list, area);
             }
         }
+        CurrentTypingOption::Text => {}
     } 
 }
 
