@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
-
 use ttypr::Config;
 
 pub struct App {
@@ -25,6 +24,8 @@ pub struct App {
     pub config: Option<Config>,
     pub show_help: bool,
     pub show_mistyped: bool,
+    pub text: Vec<String>,
+    pub skip_len: usize,
 }
 
 pub enum CurrentMode {
@@ -63,6 +64,8 @@ impl App {
             config: None,
             show_help: false,
             show_mistyped: false,
+            text: vec![],
+            skip_len: 0,
         }
     }
 
@@ -99,6 +102,23 @@ impl App {
                     self.needs_clear = true;
                     self.needs_redraw = true;
                 }
+            }
+        }
+    }
+
+    pub fn gen_one_line_of_text(&mut self) -> String {
+        let mut line_of_text = vec![];
+        loop {
+            line_of_text.push(self.text[self.skip_len].clone());
+            let current_line_len = line_of_text.join(" ").chars().count();
+            self.skip_len += 1;
+
+            if current_line_len > self.line_len {
+                line_of_text.pop();
+                self.skip_len -= 1;
+
+                let current_line = line_of_text.join(" ");
+                return current_line;
             }
         }
     }

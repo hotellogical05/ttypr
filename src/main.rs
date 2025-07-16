@@ -2,7 +2,7 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
 use std::{collections::HashMap, time::Instant};
-use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_words_from_file, save_config, Config};
+use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_text_from_file, read_words_from_file, save_config, Config};
 
 mod app;
 mod ui;
@@ -49,17 +49,24 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         Err(_) => { vec![] }
     };
     
+    // (For the Text option) - Read the text from .config/ttypr/text
+    app.text = match read_text_from_file() {
+        Ok(text) => text,
+        Err(_) => { vec![] }
+    };
+
     // Keep in first boot screen until Enter is pressed
     while app.config.as_ref().unwrap().first_boot {
         terminal.draw(|frame| render(frame, app))?; // Draw the ui
         app.handle_crossterm_events()?; // Read terminal events
     }
 
+    // Main application loop
     while app.running {
-        // Timer for notifications diplay
+        // Timer for displaying notifications
         app.on_tick();
 
-        // Clears the entire area when switching typing modes to draw switched mode ui on top of
+        // Clears the entire area when switching typing modes to draw switched mode ui
         if app.needs_clear { 
             terminal.draw(|frame| draw_on_clear(frame))?;
             app.needs_clear = false;
@@ -157,7 +164,52 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             }
                         }
                         CurrentTypingOption::Text => {
+                            if app.text.len() == 0 {}
+                            else {
+                                if app.typed {
+                                    // Number of characters the user typed, to compare with the charset
+                                    let pos = app.input_chars.len() - 1;
 
+                                    // If the input character matches the characters in the
+                                    // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
+                                    if app.input_chars[pos] == app.charset[pos] {
+                                        app.ids[pos] = 1;
+                                    } else {
+                                        app.ids[pos] = 2;
+                                        
+                                        if app.config.as_ref().unwrap().save_mistyped {
+                                            let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
+                                            *count += 1;
+                                        }
+                                    }
+
+                                    // If reached the end of the second line, remove first line amount
+                                    // of characters (words) from the character set, the user
+                                    // inputted characters, and ids. Then push new line amount of 
+                                    // characters (words) to charset, and that amount of 0's to ids
+                                    if app.input_chars.len() == app.lines_len[0] + app.lines_len[1] {
+                                        for _ in 0..app.lines_len[0] {
+                                            app.charset.pop_front();
+                                            app.input_chars.pop_front();
+                                            app.ids.pop_front();
+                                        }
+
+                                        let one_line = app.gen_one_line_of_text();
+                                        let characters: Vec<char> = one_line.chars().collect();
+
+                                        // Remove the length of the first line of words from the front, 
+                                        // and push the new one to the back.
+                                        app.lines_len.pop_front();
+                                        app.lines_len.push_back(characters.len());
+
+                                        for char in characters {
+                                            app.charset.push_back(char.to_string());
+                                            app.ids.push_back(0);
+                                        }
+                                    }
+                                    app.typed = false;
+                                }
+                            }
                         }
                     }
                 }
@@ -165,12 +217,13 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             terminal.draw(|frame| render(frame, app))?; // Draw the ui
             app.needs_redraw = false;
         }
+
         app.handle_crossterm_events()?; // Read terminal events
     }
+
     Ok(())
 }
 
-// Keyboard input
 impl App {
     // Reads the terminal events
     fn handle_crossterm_events(&mut self) -> Result<()> {
@@ -186,9 +239,9 @@ impl App {
         Ok(())
     }
 
-    // What happens on key presses
+    // Keyboard input
     fn on_key_event(&mut self, key: KeyEvent) {
-        // First boot page (if toggled takes all input)
+        // First boot page input (if toggled takes all input)
         // If Enter key is pressed sets first_boot to false in the config file
         if self.config.as_ref().unwrap().first_boot {
             match key.code {
@@ -327,27 +380,33 @@ impl App {
                                 self.current_typing_mode = CurrentTypingOption::Words 
                             },
                             CurrentTypingOption::Words => { 
-                                // Clear charset, input_chars and ids.
+                                // Clear charset, input_chars, ids and length of lines
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
-
-                                // Clear length of lines
                                 self.lines_len.clear();
-                                
 
-                                // * logic for text option
-
+                                if self.text.len() == 0 {}
+                                else {
+                                    for _ in 0..3 {
+                                        let one_line = self.gen_one_line_of_text();
+                                        let characters: Vec<char> = one_line.chars().collect();
+                                        self.lines_len.push_back(characters.len());
+                                        for char in characters {
+                                            self.charset.push_back(char.to_string());
+                                            self.ids.push_back(0);
+                                        }
+                                    }
+                                }
 
                                 // Switch the typing option to Ascii
                                 self.current_typing_mode = CurrentTypingOption::Text
                             },
                             CurrentTypingOption::Text => {
-                                // Clear charset, input_chars and ids.
+                                // Clear charset, input_chars, ids and length of lines
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
-                                // ?
                                 self.lines_len.clear();
 
                                 // Generate three lines worth of characters to charset

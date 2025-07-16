@@ -308,7 +308,22 @@ pub fn render(frame: &mut Frame, app: &App) {
             }
         }
         CurrentTypingOption::Text => {
-
+            let mut three_lines = vec![];
+            let mut skip_len = 0;
+            for i in 0..3 {
+                let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
+                    c.clone()
+                }).collect();
+                let line = Line::from(line_span).alignment(Alignment::Center);
+                let item = ListItem::new(line);
+                three_lines.push(item); // Push the line
+                three_lines.push(ListItem::new("")); // Push an empty space to separate lines
+                skip_len += app.lines_len[i];
+            }
+        
+            // Make a List widget out of list items and render it in the middle
+            let list = List::new(three_lines);
+            frame.render_widget(list, area);
         }
     } 
 }

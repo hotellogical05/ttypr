@@ -112,6 +112,23 @@ pub fn read_words_from_file() -> io::Result<Vec<String>> {
     Ok(words)
 }
 
+pub fn read_text_from_file() -> io::Result<Vec<String>> {
+    // Get the home directory path
+    let home_path = home::home_dir().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::NotFound, "Home directory not found")
+    })?;
+
+    // Construct the full path to the text.txt file
+    let config_path = home_path.join(".config/ttypr/text.txt");
+
+    let content = fs::read_to_string(config_path)?;
+    let text = content
+        .split_whitespace()
+        .map(String::from)
+        .collect();
+    Ok(text)
+}
+
 pub fn gen_one_line_of_words(line_len: usize, words: &Vec<String>) -> String {
     let mut line_of_words = vec![];
     loop {
