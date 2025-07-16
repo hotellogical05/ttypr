@@ -82,22 +82,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     match app.current_typing_mode {
                         CurrentTypingOption::Ascii => {
                             if app.typed {
-                                // Number of characters the user typed, to compare with the charset
-                                let pos = app.input_chars.len() - 1;
+                                app.update_id_field();
 
-                                // If the input character matches the characters in the
-                                // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
-                                if app.input_chars[pos] == app.charset[pos] {
-                                    app.ids[pos] = 1;
-                                } else {
-                                    app.ids[pos] = 2;
-                                    
-                                    if app.config.as_ref().unwrap().save_mistyped {
-                                        let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
-                                        *count += 1;
-                                    }
-                                }
-                            
                                 // If reached the end of the second line, remove line_len
                                 // (the first line) characters from the character set, the user
                                 // inputted characters, and ids. Then push the same amount of
@@ -119,21 +105,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             if app.words.len() == 0 {}
                             else {
                                 if app.typed {
-                                    // Number of characters the user typed, to compare with the charset
-                                    let pos = app.input_chars.len() - 1;
-
-                                    // If the input character matches the characters in the
-                                    // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
-                                    if app.input_chars[pos] == app.charset[pos] {
-                                        app.ids[pos] = 1;
-                                    } else {
-                                        app.ids[pos] = 2;
-                                        
-                                        if app.config.as_ref().unwrap().save_mistyped {
-                                            let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
-                                            *count += 1;
-                                        }
-                                    }
+                                    app.update_id_field();
 
                                     // If reached the end of the second line, remove first line amount
                                     // of characters (words) from the character set, the user
@@ -167,21 +139,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             if app.text.len() == 0 {}
                             else {
                                 if app.typed {
-                                    // Number of characters the user typed, to compare with the charset
-                                    let pos = app.input_chars.len() - 1;
-
-                                    // If the input character matches the characters in the
-                                    // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
-                                    if app.input_chars[pos] == app.charset[pos] {
-                                        app.ids[pos] = 1;
-                                    } else {
-                                        app.ids[pos] = 2;
-                                        
-                                        if app.config.as_ref().unwrap().save_mistyped {
-                                            let count = app.config.as_mut().unwrap().mistyped_chars.entry(app.charset[pos].to_string()).or_insert(0);
-                                            *count += 1;
-                                        }
-                                    }
+                                    app.update_id_field();
 
                                     // If reached the end of the second line, remove first line amount
                                     // of characters (words) from the character set, the user

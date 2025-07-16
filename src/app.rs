@@ -122,4 +122,27 @@ impl App {
             }
         }
     }
+
+    pub fn update_id_field(&mut self) {
+        // Number of characters the user typed, to compare with the charset
+        let pos = self.input_chars.len() - 1;
+
+        // If the input character matches the characters in the
+        // charset replace the 0 in ids with 1 (correct), 2 (incorrect)
+        if self.input_chars[pos] == self.charset[pos] {
+            self.ids[pos] = 1;
+        } else {
+            self.ids[pos] = 2;
+            
+            // Add the mistyped character to mistyped characters list
+            if self.config.as_ref().unwrap().save_mistyped {
+                let count = self.config.as_mut().unwrap().mistyped_chars.entry(self.charset[pos].to_string()).or_insert(0);
+                *count += 1;
+            }
+        }
+    }
+
+    pub fn update_lines(&mut self) {
+
+    }
 }
