@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use rand::Rng;
-use ttypr::Config;
+use ttypr::{Config, gen_random_ascii_char};
 
 pub struct App {
     pub running: bool,
@@ -160,34 +160,60 @@ impl App {
         }
     }
 
-    pub fn update_lines_words_text(&mut self) {
-        // If reached the end of the second line, remove first line amount
-        // of characters (words) from the character set, the user
-        // inputted characters, and ids. Then push new line amount of 
-        // characters (words) to charset, and that amount of 0's to ids
-        if self.input_chars.len() == self.lines_len[0] + self.lines_len[1] {
-            for _ in 0..self.lines_len[0] {
-                self.charset.pop_front();
-                self.input_chars.pop_front();
-                self.ids.pop_front();
+    pub fn update_lines(&mut self) {
+        match self.current_typing_mode {
+            
+             // For ASCII option
+            CurrentTypingOption::Ascii => {
+
+                // If reached the end of the second line, remove line_len
+                // (the first line) characters from the character set, the user
+                // inputted characters, and ids. Then push the same amount of
+                // new random characters to charset, and that amount of 0's to ids
+                if self.input_chars.len() == self.line_len*2 {
+                    for _ in 0..self.line_len {
+                        self.charset.pop_front();
+                        self.input_chars.pop_front();
+                        self.ids.pop_front();
+                    
+                        self.charset.push_back(gen_random_ascii_char());
+                        self.ids.push_back(0);
+                    }
+                }
             }
+            
+             // For Words and Text options
+            _ => {
 
-            let one_line = match self.current_typing_mode {
-                CurrentTypingOption::Words => { self.gen_one_line_of_words() },
-                CurrentTypingOption::Text => { self.gen_one_line_of_text() },
-                _ => String::new(),
-            };
-
-            let characters: Vec<char> = one_line.chars().collect();
-
-            // Remove the length of the first line of words from the front, 
-            // and push the new one to the back.
-            self.lines_len.pop_front();
-            self.lines_len.push_back(characters.len());
-
-            for char in characters {
-                self.charset.push_back(char.to_string());
-                self.ids.push_back(0);
+                // If reached the end of the second line, remove first line amount
+                // of characters (words) from the character set, the user
+                // inputted characters, and ids. Then push new line amount of 
+                // characters (words) to charset, and that amount of 0's to ids
+                if self.input_chars.len() == self.lines_len[0] + self.lines_len[1] {
+                    for _ in 0..self.lines_len[0] {
+                        self.charset.pop_front();
+                        self.input_chars.pop_front();
+                        self.ids.pop_front();
+                    }
+                
+                    let one_line = match self.current_typing_mode {
+                        CurrentTypingOption::Words => { self.gen_one_line_of_words() },
+                        CurrentTypingOption::Text => { self.gen_one_line_of_text() },
+                        _ => String::new(),
+                    };
+                
+                    let characters: Vec<char> = one_line.chars().collect();
+                
+                    // Remove the length of the first line of words from the front, 
+                    // and push the new one to the back.
+                    self.lines_len.pop_front();
+                    self.lines_len.push_back(characters.len());
+                
+                    for char in characters {
+                        self.charset.push_back(char.to_string());
+                        self.ids.push_back(0);
+                    }
+                }
             }
         }
     }

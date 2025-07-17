@@ -74,7 +74,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         }
 
         if app.needs_redraw {
-            // Which current typing mode the app is currently in?
+
             match app.current_mode {
                 CurrentMode::Menu => {},
                 CurrentMode::Typing => {
@@ -83,21 +83,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                         CurrentTypingOption::Ascii => {
                             if app.typed {
                                 app.update_id_field();
-
-                                // If reached the end of the second line, remove line_len
-                                // (the first line) characters from the character set, the user
-                                // inputted characters, and ids. Then push the same amount of
-                                // new random characters to charset, and that amount of 0's to ids
-                                if app.input_chars.len() == app.line_len*2 {
-                                    for _ in 0..app.line_len {
-                                        app.charset.pop_front();
-                                        app.input_chars.pop_front();
-                                        app.ids.pop_front();
-                                    
-                                        app.charset.push_back(gen_random_ascii_char());
-                                        app.ids.push_back(0);
-                                    }
-                                }
+                                app.update_lines(); // Does anything only if reached the end of the second line
                                 app.typed = false;
                             }
                         }
@@ -106,7 +92,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             else {
                                 if app.typed {
                                     app.update_id_field();
-                                    app.update_lines_words_text();
+                                    app.update_lines();
                                     app.typed = false;
                                 }
                             }
@@ -116,7 +102,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             else {
                                 if app.typed {
                                     app.update_id_field();
-                                    app.update_lines_words_text();
+                                    app.update_lines();
                                     app.typed = false;
                                 }
                             }
@@ -124,7 +110,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     }
                 }
             }
-            terminal.draw(|frame| render(frame, app))?; // Draw the ui
+
+            // Draw the UI after 
+            terminal.draw(|frame| render(frame, app))?;
             app.needs_redraw = false;
         }
 
