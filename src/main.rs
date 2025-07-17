@@ -66,6 +66,33 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         // Timer for displaying notifications
         app.on_tick();
 
+        // If the user typed
+        if app.typed {
+            match app.current_typing_mode {
+                CurrentTypingOption::Ascii => {
+                    app.update_id_field();
+                    app.update_lines(); // When reached the end of the second line
+                    app.typed = false;
+                }
+                CurrentTypingOption::Words => {
+                    if app.words.len() == 0 {}
+                    else {
+                        app.update_id_field();
+                        app.update_lines();
+                        app.typed = false;
+                    }
+                }
+                CurrentTypingOption::Text => {
+                    if app.text.len() == 0 {}
+                    else {
+                        app.update_id_field();
+                        app.update_lines();
+                        app.typed = false;
+                    }
+                }
+            }
+        }
+
         // Clears the entire area when switching typing modes to draw switched mode ui
         if app.needs_clear { 
             terminal.draw(|frame| draw_on_clear(frame))?;
@@ -73,50 +100,14 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             app.needs_redraw = true;
         }
 
+        // Draw/Redraw the ui
         if app.needs_redraw {
-
-            match app.current_mode {
-                CurrentMode::Menu => {},
-                CurrentMode::Typing => {
-                    // Which typing option is the app currently in? Run logic for it accordingly
-                    match app.current_typing_mode {
-                        CurrentTypingOption::Ascii => {
-                            if app.typed {
-                                app.update_id_field();
-                                app.update_lines(); // Does anything only if reached the end of the second line
-                                app.typed = false;
-                            }
-                        }
-                        CurrentTypingOption::Words => {
-                            if app.words.len() == 0 {}
-                            else {
-                                if app.typed {
-                                    app.update_id_field();
-                                    app.update_lines();
-                                    app.typed = false;
-                                }
-                            }
-                        }
-                        CurrentTypingOption::Text => {
-                            if app.text.len() == 0 {}
-                            else {
-                                if app.typed {
-                                    app.update_id_field();
-                                    app.update_lines();
-                                    app.typed = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Draw the UI after 
             terminal.draw(|frame| render(frame, app))?;
             app.needs_redraw = false;
         }
 
-        app.handle_crossterm_events()?; // Read terminal events
+        // Read terminal events
+        app.handle_crossterm_events()?;
     }
 
     Ok(())
