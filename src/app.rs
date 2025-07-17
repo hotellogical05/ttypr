@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
+use rand::Rng;
 use ttypr::Config;
 
 pub struct App {
@@ -106,6 +107,23 @@ impl App {
         }
     }
 
+    pub fn gen_one_line_of_words(&mut self) -> String {
+        let mut line_of_words = vec![];
+        loop {
+            let index = rand::rng().random_range(0..self.words.len());
+            let word = self.words[index].clone();
+            line_of_words.push(word);
+
+            let current_line_len = line_of_words.join(" ").chars().count();
+
+            if current_line_len > self.line_len {
+                line_of_words.pop();
+                let current_line = line_of_words.join(" ");
+                return current_line; 
+            };
+        };
+    }
+
     pub fn gen_one_line_of_text(&mut self) -> String {
         let mut line_of_text = vec![];
         loop {
@@ -142,7 +160,35 @@ impl App {
         }
     }
 
-    pub fn update_lines(&mut self) {
+    pub fn update_lines_words_text(&mut self) {
+        // If reached the end of the second line, remove first line amount
+        // of characters (words) from the character set, the user
+        // inputted characters, and ids. Then push new line amount of 
+        // characters (words) to charset, and that amount of 0's to ids
+        if self.input_chars.len() == self.lines_len[0] + self.lines_len[1] {
+            for _ in 0..self.lines_len[0] {
+                self.charset.pop_front();
+                self.input_chars.pop_front();
+                self.ids.pop_front();
+            }
 
+            let one_line = match self.current_typing_mode {
+                CurrentTypingOption::Words => { self.gen_one_line_of_words() },
+                CurrentTypingOption::Text => { self.gen_one_line_of_text() },
+                _ => String::new(),
+            };
+
+            let characters: Vec<char> = one_line.chars().collect();
+
+            // Remove the length of the first line of words from the front, 
+            // and push the new one to the back.
+            self.lines_len.pop_front();
+            self.lines_len.push_back(characters.len());
+
+            for char in characters {
+                self.charset.push_back(char.to_string());
+                self.ids.push_back(0);
+            }
+        }
     }
 }

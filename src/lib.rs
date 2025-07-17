@@ -128,20 +128,3 @@ pub fn read_text_from_file() -> io::Result<Vec<String>> {
         .collect();
     Ok(text)
 }
-
-pub fn gen_one_line_of_words(line_len: usize, words: &Vec<String>) -> String {
-    let mut line_of_words = vec![];
-    loop {
-        let index = rand::rng().random_range(0..words.len());
-        let word = words[index].clone();
-        line_of_words.push(word);
-
-        let current_line_len = line_of_words.join(" ").chars().count();
-
-        if current_line_len > line_len {
-            line_of_words.pop();
-            let current_line = line_of_words.join(" ");
-            return current_line; 
-        };
-    };
-}

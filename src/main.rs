@@ -2,7 +2,7 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
 use std::{collections::HashMap, time::Instant};
-use ttypr::{gen_one_line_of_words, gen_random_ascii_char, load_config, read_text_from_file, read_words_from_file, save_config, Config};
+use ttypr::{gen_random_ascii_char, load_config, read_text_from_file, read_words_from_file, save_config, Config};
 
 mod app;
 mod ui;
@@ -106,31 +106,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             else {
                                 if app.typed {
                                     app.update_id_field();
-
-                                    // If reached the end of the second line, remove first line amount
-                                    // of characters (words) from the character set, the user
-                                    // inputted characters, and ids. Then push new line amount of 
-                                    // characters (words) to charset, and that amount of 0's to ids
-                                    if app.input_chars.len() == app.lines_len[0] + app.lines_len[1] {
-                                        for _ in 0..app.lines_len[0] {
-                                            app.charset.pop_front();
-                                            app.input_chars.pop_front();
-                                            app.ids.pop_front();
-                                        }
-
-                                        let one_line = gen_one_line_of_words(app.line_len, &app.words);
-                                        let characters: Vec<char> = one_line.chars().collect();
-
-                                        // Remove the length of the first line of words from the front, 
-                                        // and push the new one to the back.
-                                        app.lines_len.pop_front();
-                                        app.lines_len.push_back(characters.len());
-
-                                        for char in characters {
-                                            app.charset.push_back(char.to_string());
-                                            app.ids.push_back(0);
-                                        }
-                                    }
+                                    app.update_lines_words_text();
                                     app.typed = false;
                                 }
                             }
@@ -140,31 +116,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             else {
                                 if app.typed {
                                     app.update_id_field();
-
-                                    // If reached the end of the second line, remove first line amount
-                                    // of characters (words) from the character set, the user
-                                    // inputted characters, and ids. Then push new line amount of 
-                                    // characters (words) to charset, and that amount of 0's to ids
-                                    if app.input_chars.len() == app.lines_len[0] + app.lines_len[1] {
-                                        for _ in 0..app.lines_len[0] {
-                                            app.charset.pop_front();
-                                            app.input_chars.pop_front();
-                                            app.ids.pop_front();
-                                        }
-
-                                        let one_line = app.gen_one_line_of_text();
-                                        let characters: Vec<char> = one_line.chars().collect();
-
-                                        // Remove the length of the first line of words from the front, 
-                                        // and push the new one to the back.
-                                        app.lines_len.pop_front();
-                                        app.lines_len.push_back(characters.len());
-
-                                        for char in characters {
-                                            app.charset.push_back(char.to_string());
-                                            app.ids.push_back(0);
-                                        }
-                                    }
+                                    app.update_lines_words_text();
                                     app.typed = false;
                                 }
                             }
@@ -324,7 +276,7 @@ impl App {
                                 else {
                                     // Generate three lines of words (charset)
                                     for _ in 0..3 {
-                                        let one_line = gen_one_line_of_words(self.line_len, &self.words);
+                                        let one_line = self.gen_one_line_of_words();
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
@@ -402,7 +354,7 @@ impl App {
                                     self.words = default_words;
 
                                     for _ in 0..3 {
-                                        let one_line = gen_one_line_of_words(self.line_len, &self.words);
+                                        let one_line = self.gen_one_line_of_words();
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
