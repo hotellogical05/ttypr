@@ -17,6 +17,19 @@ fn main() -> color_eyre::Result<()> {
     let mut app = App::new();
     let result = run(terminal, &mut app);
 
+    // (If exited the application while being the Text option)
+    // Subtract how many "words" there were on the first three lines 
+    match app.current_typing_mode {
+        CurrentTypingOption::Text => {
+            if app.config.as_ref().unwrap().skip_len >= app.first_text_gen_len {
+                app.config.as_mut().unwrap().skip_len -= app.first_text_gen_len;
+            } else {
+                app.config.as_mut().unwrap().skip_len = 0;
+            }
+        }
+        _ => {}
+    }
+
     // Save config (for mistyped characters) before exiting
     if let Some(config) = &app.config {
         save_config(config).unwrap_or_else(|err| {
@@ -320,14 +333,12 @@ impl App {
                                 self.lines_len.clear();
 
                                 // Subtract how many "words" there were on the first three lines
-                                // 
-                                if self.skip_len >= self.first_text_gen_len {
-                                    self.skip_len -= self.first_text_gen_len;
+                                if self.config.as_ref().unwrap().skip_len >= self.first_text_gen_len {
+                                    self.config.as_mut().unwrap().skip_len -= self.first_text_gen_len;
                                 } else {
-                                    self.skip_len = 0;
+                                    self.config.as_mut().unwrap().skip_len = 0;
                                 }
                                 self.first_text_gen_len = 0;
-                                // *  ^ on quit also
 
                                 // Generate three lines worth of characters and ids
                                 for _ in 0..self.line_len*3 {

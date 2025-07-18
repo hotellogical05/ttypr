@@ -10,6 +10,7 @@ pub struct Config {
     #[serde(serialize_with = "serialize_sorted_by_value")]
     pub mistyped_chars: HashMap<String, usize>,
     pub save_mistyped: bool,
+    pub skip_len: usize,
 }
 
 impl Default for Config {
@@ -19,6 +20,7 @@ impl Default for Config {
             show_notifications: true,
             mistyped_chars: HashMap::new(),
             save_mistyped: true,
+            skip_len: 0,
         }
     }
 }

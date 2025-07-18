@@ -26,7 +26,6 @@ pub struct App {
     pub show_help: bool,
     pub show_mistyped: bool,
     pub text: Vec<String>,
-    pub skip_len: usize,
     pub first_text_gen_len: usize,
 }
 
@@ -67,7 +66,6 @@ impl App {
             show_help: false,
             show_mistyped: false,
             text: vec![],
-            skip_len: 0,
             first_text_gen_len: 0,
         }
     }
@@ -130,15 +128,15 @@ impl App {
         let mut line_of_text = vec![];
         loop {
             // If reached the end of the text - set position to 0
-            if self.skip_len == self.text.len() { self.skip_len = 0 }
+            if self.config.as_ref().unwrap().skip_len == self.text.len() { self.config.as_mut().unwrap().skip_len = 0 }
 
-            line_of_text.push(self.text[self.skip_len].clone());
+            line_of_text.push(self.text[self.config.as_ref().unwrap().skip_len].clone());
             let current_line_len = line_of_text.join(" ").chars().count();
-            self.skip_len += 1;
+            self.config.as_mut().unwrap().skip_len += 1;
 
             if current_line_len > self.line_len {
                 line_of_text.pop();
-                self.skip_len -= 1;
+                self.config.as_mut().unwrap().skip_len -= 1;
 
                 let current_line = line_of_text.join(" ");
                 return current_line;
