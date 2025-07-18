@@ -320,9 +320,14 @@ impl App {
                                 self.lines_len.clear();
 
                                 // Subtract how many "words" there were on the first three lines
-                                // * ? if skip_len == 0 { self.skip_len() = self.text.len() - ? }
-                                self.skip_len -= self.first_text_gen_len;
+                                // 
+                                if self.skip_len >= self.first_text_gen_len {
+                                    self.skip_len -= self.first_text_gen_len;
+                                } else {
+                                    self.skip_len = 0;
+                                }
                                 self.first_text_gen_len = 0;
+                                // *  ^ on quit also
 
                                 // Generate three lines worth of characters and ids
                                 for _ in 0..self.line_len*3 {
