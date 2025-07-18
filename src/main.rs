@@ -310,7 +310,7 @@ impl App {
                                         let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
                                         self.first_text_gen_len += first_text_gen_len.len();
 
-                                        // Push three lines worth of characters (from text) and ids
+                                        // Push a line of characters (from text) and ids
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
@@ -403,6 +403,14 @@ impl App {
                                     // Keep track of the length of those lines in characters.
                                     for _ in 0..3 {
                                         let one_line = self.gen_one_line_of_text();
+
+                                        // Count for how many "words" there were on the first three lines
+                                        // to keep position on option switch and exit.
+                                        // Otherwise would always skip 3 lines down.
+                                        let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
+                                        self.first_text_gen_len += first_text_gen_len.len();
+
+                                        // Push a line of characters (from text) and ids
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
@@ -410,7 +418,7 @@ impl App {
                                             self.ids.push_back(0);
                                         }
                                     }
-
+                                    
                                     self.needs_redraw = true;
                                 }
                             }
