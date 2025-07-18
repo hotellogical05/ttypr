@@ -71,7 +71,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             match app.current_typing_mode {
                 CurrentTypingOption::Ascii => {
                     app.update_id_field();
-                    app.update_lines(); // When reached the end of the second line
+                    app.update_lines(); // Only does anything if reached the end of the second line
                     app.typed = false;
                 }
                 CurrentTypingOption::Words => {
@@ -93,7 +93,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             }
         }
 
-        // Clears the entire area when switching typing modes to draw switched mode ui
+        // Clear the entire area
         if app.needs_clear { 
             terminal.draw(|frame| draw_on_clear(frame))?;
             app.needs_clear = false;
@@ -240,22 +240,30 @@ impl App {
 
                     // Typing option switch (ASCII, Words, Text)
                     KeyCode::Char('o') => {
+
+                        // Option switch notification
                         self.needs_clear = true;
                         self.show_option_notification = true;
                         self.notification_time_count = Some(Instant::now());
 
+                        // Switches current typing option
                         match self.current_typing_mode {
+                            
+                            // If ASCII - switch to Words
                             CurrentTypingOption::Ascii => {
                                 // Clear charset, input_chars and ids.
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
                                 
+                                // Only generate the lines if the words file was provided or the default set was chosen
                                 if self.words.len() == 0 {}
                                 else {
                                     // Generate three lines of words (charset)
                                     for _ in 0..3 {
                                         let one_line = self.gen_one_line_of_words();
+
+                                        // Push three lines worth of characters (from words) and ids
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
@@ -268,6 +276,8 @@ impl App {
                                 // Switch the typing option to Words
                                 self.current_typing_mode = CurrentTypingOption::Words 
                             },
+                            
+                            // If Words - switch to Text
                             CurrentTypingOption::Words => { 
                                 // Clear charset, input_chars, ids and length of lines
                                 self.charset.clear();
@@ -275,10 +285,19 @@ impl App {
                                 self.ids.clear();
                                 self.lines_len.clear();
 
+                                // Only generate the lines if the text file was provided or the default text was chosen
                                 if self.text.len() == 0 {}
                                 else {
                                     for _ in 0..3 {
                                         let one_line = self.gen_one_line_of_text();
+
+                                        // Count for how many "words" there were on the first three lines
+                                        // to keep position on option switch and exit.
+                                        // Otherwise would always skip 3 lines down.
+                                        let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
+                                        self.first_text_gen_len += first_text_gen_len.len();
+
+                                        // Push three lines worth of characters (from text) and ids
                                         let characters: Vec<char> = one_line.chars().collect();
                                         self.lines_len.push_back(characters.len());
                                         for char in characters {
@@ -288,9 +307,11 @@ impl App {
                                     }
                                 }
 
-                                // Switch the typing option to Ascii
+                                // Switch the typing option to Text
                                 self.current_typing_mode = CurrentTypingOption::Text
                             },
+
+                            // If Text - switch to ASCII
                             CurrentTypingOption::Text => {
                                 // Clear charset, input_chars, ids and length of lines
                                 self.charset.clear();
@@ -298,7 +319,12 @@ impl App {
                                 self.ids.clear();
                                 self.lines_len.clear();
 
-                                // Generate three lines worth of characters to charset
+                                // Subtract how many "words" there were on the first three lines
+                                // * ? if skip_len == 0 { self.skip_len() = self.text.len() - ? }
+                                self.skip_len -= self.first_text_gen_len;
+                                self.first_text_gen_len = 0;
+
+                                // Generate three lines worth of characters and ids
                                 for _ in 0..self.line_len*3 {
                                     self.charset.push_back(gen_random_ascii_char());
                                     self.ids.push_back(0);

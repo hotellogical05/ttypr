@@ -27,6 +27,7 @@ pub struct App {
     pub show_mistyped: bool,
     pub text: Vec<String>,
     pub skip_len: usize,
+    pub first_text_gen_len: usize,
 }
 
 pub enum CurrentMode {
@@ -51,7 +52,7 @@ impl App {
             charset: VecDeque::new(),
             input_chars: VecDeque::new(),
             ids: VecDeque::new(),
-            line_len: 40,
+            line_len: 50,
             lines_len: VecDeque::new(),
             current_mode: CurrentMode::Menu,
             current_typing_mode: CurrentTypingOption::Ascii,
@@ -67,6 +68,7 @@ impl App {
             show_mistyped: false,
             text: vec![],
             skip_len: 0,
+            first_text_gen_len: 0,
         }
     }
 
@@ -127,6 +129,9 @@ impl App {
     pub fn gen_one_line_of_text(&mut self) -> String {
         let mut line_of_text = vec![];
         loop {
+            // If reached the end of the text - set position to 0
+            if self.skip_len == self.text.len() { self.skip_len = 0 }
+
             line_of_text.push(self.text[self.skip_len].clone());
             let current_line_len = line_of_text.join(" ").chars().count();
             self.skip_len += 1;
