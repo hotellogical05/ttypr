@@ -308,22 +308,50 @@ pub fn render(frame: &mut Frame, app: &App) {
             }
         }
         CurrentTypingOption::Text => {
-            let mut three_lines = vec![];
-            let mut skip_len = 0;
-            for i in 0..3 {
-                let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
-                    c.clone()
-                }).collect();
-                let line = Line::from(line_span).alignment(Alignment::Center);
-                let item = ListItem::new(line);
-                three_lines.push(item); // Push the line
-                three_lines.push(ListItem::new("")); // Push an empty space to separate lines
-                skip_len += app.lines_len[i];
-            }
-        
-            // Make a List widget out of list items and render it in the middle
-            let list = List::new(three_lines);
-            frame.render_widget(list, area);
+            if app.text.len() == 0 {
+                let area = center(
+                    frame.area(),
+                    Constraint::Length(50),
+                    Constraint::Length(15),
+                );
+
+                let no_text_message = vec![
+                    Line::from("In order to use the Text typing option").alignment(Alignment::Center),
+                    Line::from("you need to have a:").alignment(Alignment::Center),
+                    Line::from(""), // Push an empty space to separate lines
+                    Line::from("~/.config/ttypr/text.txt").alignment(Alignment::Center),
+                    Line::from(""),
+                    Line::from("Or you can use the default one by pressing Enter").alignment(Alignment::Center),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+                ];
+
+                let no_text_message: Vec<_> = no_text_message
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+
+                let no_words_message = List::new(no_text_message);
+                frame.render_widget(no_words_message, area);
+            } else {
+                let mut three_lines = vec![];
+                let mut skip_len = 0;
+                for i in 0..3 {
+                    let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
+                        c.clone()
+                    }).collect();
+                    let line = Line::from(line_span).alignment(Alignment::Center);
+                    let item = ListItem::new(line);
+                    three_lines.push(item); // Push the line
+                    three_lines.push(ListItem::new("")); // Push an empty space to separate lines
+                    skip_len += app.lines_len[i];
+                }
+
+                // Make a List widget out of list items and render it in the middle
+                let list = List::new(three_lines);
+                frame.render_widget(list, area);
+            }        
         }
     } 
 }
