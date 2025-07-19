@@ -203,7 +203,7 @@ impl App {
                     // Exit the application
                     KeyCode::Char('q') => self.quit(),
 
-                    // Reset mistyped charactes count
+                    // Reset mistyped characters count
                     KeyCode::Char('r') => {
                         self.config.as_mut().unwrap().mistyped_chars = HashMap::new();
                         self.show_clear_mistyped_notification = true;
@@ -354,6 +354,23 @@ impl App {
 
                     // Switch to Typing mode
                     KeyCode::Char('i') => { 
+                        // Check for whether the words/text has anything
+                        // to prevent being able to switch to Typing mode
+                        // in info page if no words/text file was provided
+                        match self.current_typing_mode {
+                            CurrentTypingOption::Words => {
+                                if self.words.len() == 0 {
+                                    return
+                                }
+                            }
+                            CurrentTypingOption::Text => {
+                                if self.text.len() == 0 {
+                                    return
+                                }
+                            }
+                            _ => {}
+                        }
+
                         self.current_mode = CurrentMode::Typing;
                         self.show_mode_notification = true;
                         self.notification_time_count = Some(Instant::now());
