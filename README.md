@@ -1,10 +1,10 @@
-![](preview.gif)
+![](app-preview.gif)
 
 # ttypr
 
 **t**erminal **ty**ping **pr**actice
 
-Current typing options: **ASCII** and **Words**
+Current typing options: **ASCII**, **Words** and **Text**
 
 Based on [Ratatui][RatatuiRepo]
 
@@ -23,7 +23,7 @@ cargo install ttypr
 - **h** - display the help page
 - **q** - exit the application
 - **i** - switch to Typing mode
-- **o** - switch Typing option (ASCII, Words)
+- **o** - switch Typing option (ASCII, Words, Text)
 - **n** - toggle notifications
 - **c** - toggle counting mistyped characters
 - **w** - display top mistyped characters

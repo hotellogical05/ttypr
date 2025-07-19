@@ -28,7 +28,7 @@ pub fn render(frame: &mut Frame, app: &App) {
             Line::from("            h - access the help page"),
             Line::from("            q - exit the application"),
             Line::from("            i - switch to Typing mode"),
-            Line::from("            o - switch Typing option (ASCII, Words)"),
+            Line::from("            o - switch Typing option (ASCII, Words, Text)"),
             Line::from("            n - toggle notifications"),
             Line::from("            c - toggle counting mistyped characters"),
             Line::from("            w - display top mistyped characters"),
