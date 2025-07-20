@@ -239,7 +239,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     match app.current_typing_mode {
         CurrentTypingOption::Ascii => {
             // Separating vector of all the colored characters into vector of 3 lines, each line_len long
-            // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
+            // and making them List items, to display as a List widget
             let mut three_lines = vec![];
             for i in 0..3 {
                 // Skip 0, 1, 2 lines, take line length of characters, and make a vector out of them

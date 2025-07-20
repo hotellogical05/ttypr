@@ -383,7 +383,7 @@ impl App {
                         match self.current_typing_mode {
                             CurrentTypingOption::Words => {
                                 if self.words.len() == 0 {
-                                    // Set the Words option to use the default set
+                                    // Get the default words set
                                     self.words = default_words();
 
                                     // Generate three lines worth of words (characters) and ids.
@@ -403,7 +403,7 @@ impl App {
                             }
                             CurrentTypingOption::Text => {
                                 if self.text.len() == 0 {
-                                    // Set the Text option to use the default set
+                                    // Get the default sentences
                                     self.text = default_text();
 
                                     // Generate three lines worth of words (characters) and ids.
