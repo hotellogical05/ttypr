@@ -1,4 +1,4 @@
-![](app-preview.gif)
+![](preview.gif)
 
 # ttypr
 

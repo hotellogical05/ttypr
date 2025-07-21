@@ -42,7 +42,6 @@ fn main() -> color_eyre::Result<()> {
     result
 }
 
-// Run the application's main loop
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // Load config file or create it
     app.config = Some(load_config().unwrap_or_else(|_err| {
