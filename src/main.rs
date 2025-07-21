@@ -70,6 +70,41 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         Err(_) => { vec![] }
     };
 
+    // If words file provided use that one instead of the default set
+    if app.words.len() > 0 {
+        app.config.as_mut().unwrap().use_default_word_set = false;
+    }
+    
+    // Use the default word set if previously selected to use it
+    if app.config.as_ref().unwrap().use_default_word_set {
+        app.words = default_words();
+    }
+
+    // This is for if user decided to switch between using the default text set
+    // and a provided one.
+    // If text file was provided, and default text set was previously selected -
+    // use the provided file contents instead from now on, and reset the
+    // Text option position.
+    if app.text.len() > 0 && app.config.as_ref().unwrap().use_default_text_set {
+        app.config.as_mut().unwrap().use_default_text_set = false;
+        app.config.as_mut().unwrap().skip_len = 0;
+    }
+
+    // This is for if user decided to switch between using the default text set
+    // and a provided one.
+    // If file was not provided, and default text set is not selected - set the
+    // Text option position to the beginning.
+    // (This is here because the user can delete the provided text set, so this
+    // if block resets the position in the Text option to the beginning)
+    if app.text.len() == 0 && !app.config.as_ref().unwrap().use_default_text_set {
+        app.config.as_mut().unwrap().skip_len = 0;
+    }
+                                
+    // Use the text set if previously selected to use it
+    if app.config.as_ref().unwrap().use_default_text_set {
+        app.text = default_text();
+    }
+
     // Keep in first boot screen until Enter is pressed
     while app.config.as_ref().unwrap().first_boot {
         terminal.draw(|frame| render(frame, app))?; // Draw the ui
@@ -394,6 +429,9 @@ impl App {
                                         }
                                     }
 
+                                    // Remember to use the default word set
+                                    self.config.as_mut().unwrap().use_default_word_set = true;
+
                                     self.needs_redraw = true;
                                 }
                             }
@@ -422,6 +460,9 @@ impl App {
                                         }
                                     }
                                     
+                                    // Remember to use the default text set
+                                    self.config.as_mut().unwrap().use_default_text_set = true;
+
                                     self.needs_redraw = true;
                                 }
                             }

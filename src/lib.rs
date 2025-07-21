@@ -11,6 +11,8 @@ pub struct Config {
     pub mistyped_chars: HashMap<String, usize>,
     pub save_mistyped: bool,
     pub skip_len: usize,
+    pub use_default_word_set: bool,
+    pub use_default_text_set: bool,
 }
 
 impl Default for Config {
@@ -21,6 +23,8 @@ impl Default for Config {
             mistyped_chars: HashMap::new(),
             save_mistyped: true,
             skip_len: 0, // (For the text option) - To save position in the text
+            use_default_word_set: false,
+            use_default_text_set: false,
         }
     }
 }
