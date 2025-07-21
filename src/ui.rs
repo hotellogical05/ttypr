@@ -219,16 +219,26 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // A vector of colored characters
     let span: Vec<Span> = app.charset.iter().enumerate().map(|(i, c)| {
+
         // If inputted character matches charset character add a green colored character that user inputted
         if app.ids[i] == 1 {
             Span::styled(c.to_string(), Style::new().fg(Color::Indexed(10)))
+
         // If inputted character doesn't match charset character add a red colored character that user inputted
         } else if app.ids[i] == 2 {
+            // If incorrectly inputted character is a space - add a "_" instead
             if app.input_chars[i] == " " {
                 Span::styled("_".to_string(), Style::new().fg(Color::Indexed(9)))
             } else {
-                Span::styled(app.input_chars[i].to_string(), Style::new().fg(Color::Indexed(9)))
+                // If incorrectly typed a space - add a "_" instead
+                if app.charset[i] == " " {
+                    Span::styled("_".to_string(), Style::new().fg(Color::Indexed(9)))
+                // Otherwise add a red colored mistyped character
+                } else {
+                    Span::styled(app.charset[i].to_string(), Style::new().fg(Color::Indexed(9)))
+                }
             }
+
         // Otherwise add a grey colored character (hasn't been typed yet)
         } else {
             Span::styled(c.to_string(), Style::new().fg(Color::Indexed(8)))
