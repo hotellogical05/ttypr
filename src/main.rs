@@ -49,20 +49,22 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         Config::default()
     }));
 
-    // (For the ASCII option) - Generate initial random charset and all ids set to 0
+    // (For the ASCII option) - Generate initial random charset and set all ids to 0
     // (This for block is here because the default typing option is Ascii)
     for _ in 0..app.line_len*3 {
         app.charset.push_back(gen_random_ascii_char());
         app.ids.push_back(0);
     }
 
-    // (For the Words option) - Read the words from .config/ttypr/words
+    // (For the Words option) - Read the words from .config/ttypr/words.txt
+    // If doesn't exist - return an empty vector instead
     app.words = match read_words_from_file() {
         Ok(words) => words,
         Err(_) => { vec![] }
     };
     
-    // (For the Text option) - Read the text from .config/ttypr/text
+    // (For the Text option) - Read the text from .config/ttypr/text.txt
+    // If doesn't exist - return an empty vector instead
     app.text = match read_text_from_file() {
         Ok(text) => text,
         Err(_) => { vec![] }
@@ -88,20 +90,14 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     app.typed = false;
                 }
                 CurrentTypingOption::Words => {
-                    if app.words.len() == 0 {}
-                    else {
-                        app.update_id_field();
-                        app.update_lines();
-                        app.typed = false;
-                    }
+                    app.update_id_field();
+                    app.update_lines();
+                    app.typed = false;
                 }
                 CurrentTypingOption::Text => {
-                    if app.text.len() == 0 {}
-                    else {
-                        app.update_id_field();
-                        app.update_lines();
-                        app.typed = false;
-                    }
+                    app.update_id_field();
+                    app.update_lines();
+                    app.typed = false;
                 }
             }
         }

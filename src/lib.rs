@@ -20,7 +20,7 @@ impl Default for Config {
             show_notifications: true,
             mistyped_chars: HashMap::new(),
             save_mistyped: true,
-            skip_len: 0,
+            skip_len: 0, // (For the text option) - To save position in the text
         }
     }
 }
