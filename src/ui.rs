@@ -196,7 +196,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
         let mut option_span: Vec<ListItem> = vec![];
 
-        match app.current_typing_mode {
+        match app.current_typing_option {
             CurrentTypingOption::Ascii => {
                 option_span.push(ListItem::new(Span::styled("Ascii", Style::new().fg(Color::Black).bg(Color::White))));
                 option_span.push(ListItem::new(Span::styled("Words", Style::new().fg(Color::White))));
@@ -246,7 +246,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }).collect();
 
     // Draw the typing area itself
-    match app.current_typing_mode {
+    match app.current_typing_option {
         CurrentTypingOption::Ascii => {
             // Separating vector of all the colored characters into vector of 3 lines, each line_len long
             // and making them List items, to display as a List widget

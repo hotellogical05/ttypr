@@ -14,7 +14,7 @@ pub struct App {
     pub line_len: usize,
     pub lines_len: VecDeque<usize>, // Current length of lines in characters for the Words option
     pub current_mode: CurrentMode,
-    pub current_typing_mode: CurrentTypingOption,
+    pub current_typing_option: CurrentTypingOption,
     pub words: Vec<String>,
     pub show_mode_notification: bool,
     pub show_option_notification: bool,
@@ -54,7 +54,7 @@ impl App {
             line_len: 50,
             lines_len: VecDeque::new(),
             current_mode: CurrentMode::Menu,
-            current_typing_mode: CurrentTypingOption::Ascii,
+            current_typing_option: CurrentTypingOption::Ascii,
             words: vec![],
             show_mode_notification: false,
             show_option_notification: false,
@@ -164,7 +164,7 @@ impl App {
     }
 
     pub fn update_lines(&mut self) {
-        match self.current_typing_mode {
+        match self.current_typing_option {
             
              // For ASCII option
             CurrentTypingOption::Ascii => {
@@ -199,7 +199,7 @@ impl App {
                         self.ids.pop_front();
                     }
                 
-                    let one_line = match self.current_typing_mode {
+                    let one_line = match self.current_typing_option {
                         CurrentTypingOption::Words => { self.gen_one_line_of_words() },
                         CurrentTypingOption::Text => { self.gen_one_line_of_text() },
                         _ => String::new(),

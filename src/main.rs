@@ -29,7 +29,7 @@ fn main() -> color_eyre::Result<()> {
 
     // (If exited the application while being the Text option)
     // Subtract how many "words" there were on the first three lines 
-    match app.current_typing_mode {
+    match app.current_typing_option {
         CurrentTypingOption::Text => {
             if app.config.as_ref().unwrap().skip_len >= app.first_text_gen_len {
                 app.config.as_mut().unwrap().skip_len -= app.first_text_gen_len;
@@ -131,7 +131,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
         // If the user typed
         if app.typed {
-            match app.current_typing_mode {
+            match app.current_typing_option {
                 CurrentTypingOption::Ascii => {
                     app.update_id_field();
                     app.update_lines(); // Only does anything if reached the end of the second line
@@ -306,7 +306,7 @@ impl App {
                         self.notification_time_count = Some(Instant::now());
 
                         // Switches current typing option
-                        match self.current_typing_mode {
+                        match self.current_typing_option {
                             
                             // If ASCII - switch to Words
                             CurrentTypingOption::Ascii => {
@@ -333,7 +333,7 @@ impl App {
                                 }
 
                                 // Switch the typing option to Words
-                                self.current_typing_mode = CurrentTypingOption::Words 
+                                self.current_typing_option = CurrentTypingOption::Words 
                             },
                             
                             // If Words - switch to Text
@@ -367,7 +367,7 @@ impl App {
                                 }
 
                                 // Switch the typing option to Text
-                                self.current_typing_mode = CurrentTypingOption::Text
+                                self.current_typing_option = CurrentTypingOption::Text
                             },
 
                             // If Text - switch to ASCII
@@ -393,7 +393,7 @@ impl App {
                                 }
                                 
                                 // Switch the typing option to Ascii
-                                self.current_typing_mode = CurrentTypingOption::Ascii 
+                                self.current_typing_option = CurrentTypingOption::Ascii 
                             }
                         }
                     }
@@ -403,7 +403,7 @@ impl App {
                         // Check for whether the words/text has anything
                         // to prevent being able to switch to Typing mode
                         // in info page if no words/text file was provided
-                        match self.current_typing_mode {
+                        match self.current_typing_option {
                             CurrentTypingOption::Words => {
                                 if self.words.len() == 0 {
                                     return
@@ -426,7 +426,7 @@ impl App {
                     // If Enter is pressed in the Words/Text typing options, 
                     // with no words/text file provided - use the default set.
                     KeyCode::Enter => { 
-                        match self.current_typing_mode {
+                        match self.current_typing_option {
                             CurrentTypingOption::Words => {
                                 if self.words.len() == 0 {
                                     // Get the default words set
