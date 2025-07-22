@@ -22,7 +22,7 @@ pub struct App {
     pub show_mistyped_notification: bool,
     pub show_clear_mistyped_notification: bool,
     pub notification_time_count: Option<Instant>,
-    pub config: Option<Config>,
+    pub config: Config,
     pub show_help: bool,
     pub show_mistyped: bool,
     pub text: Vec<String>,
@@ -62,7 +62,7 @@ impl App {
             show_mistyped_notification: false,
             show_clear_mistyped_notification: false,
             notification_time_count: None,
-            config: None,
+            config: Config::default(),
             show_help: false,
             show_mistyped: false,
             text: vec![],
@@ -128,15 +128,15 @@ impl App {
         let mut line_of_text = vec![];
         loop {
             // If reached the end of the text - set position to 0
-            if self.config.as_ref().unwrap().skip_len == self.text.len() { self.config.as_mut().unwrap().skip_len = 0 }
+            if self.config.skip_len == self.text.len() { self.config.skip_len = 0 }
 
-            line_of_text.push(self.text[self.config.as_ref().unwrap().skip_len].clone());
+            line_of_text.push(self.text[self.config.skip_len].clone());
             let current_line_len = line_of_text.join(" ").chars().count();
-            self.config.as_mut().unwrap().skip_len += 1;
+            self.config.skip_len += 1;
 
             if current_line_len > self.line_len {
                 line_of_text.pop();
-                self.config.as_mut().unwrap().skip_len -= 1;
+                self.config.skip_len -= 1;
 
                 let current_line = line_of_text.join(" ");
                 return current_line;
@@ -156,8 +156,8 @@ impl App {
             self.ids[pos] = 2;
             
             // Add the mistyped character to mistyped characters list
-            if self.config.as_ref().unwrap().save_mistyped {
-                let count = self.config.as_mut().unwrap().mistyped_chars.entry(self.charset[pos].to_string()).or_insert(0);
+            if self.config.save_mistyped {
+                let count = self.config.mistyped_chars.entry(self.charset[pos].to_string()).or_insert(0);
                 *count += 1;
             }
         }

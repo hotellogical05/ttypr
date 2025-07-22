@@ -12,7 +12,7 @@ use ttypr::get_sorted_mistakes;
 // Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
     // If first boot or the help page toggled display only this
-    if app.config.as_ref().unwrap().first_boot || app.show_help {
+    if app.config.first_boot || app.show_help {
         let first_boot_message_area = center(
             frame.area(),
             Constraint::Length(60),
@@ -57,7 +57,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Most mistyped characters display
     if app.show_mistyped {
-        let sorted_mistakes = get_sorted_mistakes(&app.config.as_ref().unwrap().mistyped_chars);
+        let sorted_mistakes = get_sorted_mistakes(&app.config.mistyped_chars);
         let sorted_mistakes: Vec<(String, usize)> = sorted_mistakes.iter().take(15).map(|(k, v)| (k.to_string(), **v)).collect();
 
         let mut mistake_lines: Vec<ListItem> = vec![];
@@ -101,7 +101,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     );
 
     // Cleared mistyped characters count display
-    if app.show_clear_mistyped_notification && app.config.as_ref().unwrap().show_notifications {
+    if app.show_clear_mistyped_notification && app.config.show_notifications {
         let clear_mistyped_notification_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -114,7 +114,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     // Mistyped characters count toggle display
-    if app.show_mistyped_notification && app.config.as_ref().unwrap().show_notifications {
+    if app.show_mistyped_notification && app.config.show_notifications {
         let mistyped_chars_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -126,7 +126,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         let mistyped_chars_on = Line::from(vec![Span::from("  Counting mistyped characters "), Span::styled("on", Style::new().fg(Color::Green))]).alignment(Alignment::Center);
         let mistyped_chars_off = Line::from(vec![Span::from("  Counting mistyped characters "), Span::styled("off", Style::new().fg(Color::Red))]).alignment(Alignment::Center);
 
-        if app.config.as_ref().unwrap().save_mistyped {
+        if app.config.save_mistyped {
             frame.render_widget(mistyped_chars_on, mistyped_chars_area[1]);
         } else {
             frame.render_widget(mistyped_chars_off, mistyped_chars_area[1]);
@@ -152,7 +152,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         let notifications_on = Line::from(vec![Span::from("  Notifications "), Span::styled("on", Style::new().fg(Color::Green))]).alignment(Alignment::Left);
         let notifications_off = Line::from(vec![Span::from("  Notifications "), Span::styled("off", Style::new().fg(Color::Red))]).alignment(Alignment::Left);
 
-        if app.config.as_ref().unwrap().show_notifications {
+        if app.config.show_notifications {
             frame.render_widget(notifications_on, notification_toggle_area[0]);
         } else {
             frame.render_widget(notifications_off, notification_toggle_area[0]);
@@ -160,7 +160,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     // Typing mode selection display (Menu, Typing)
-    if app.show_mode_notification && app.config.as_ref().unwrap().show_notifications {
+    if app.show_mode_notification && app.config.show_notifications {
         let mode_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -180,7 +180,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
     
     // Typing option selection display (Ascii, Words, Text)
-    if app.show_option_notification && app.config.as_ref().unwrap().show_notifications {
+    if app.show_option_notification && app.config.show_notifications {
         let option_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![

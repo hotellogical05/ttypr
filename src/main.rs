@@ -31,21 +31,19 @@ fn main() -> color_eyre::Result<()> {
     // Subtract how many "words" there were on the first three lines 
     match app.current_typing_option {
         CurrentTypingOption::Text => {
-            if app.config.as_ref().unwrap().skip_len >= app.first_text_gen_len {
-                app.config.as_mut().unwrap().skip_len -= app.first_text_gen_len;
+            if app.config.skip_len >= app.first_text_gen_len {
+                app.config.skip_len -= app.first_text_gen_len;
             } else {
-                app.config.as_mut().unwrap().skip_len = 0;
+                app.config.skip_len = 0;
             }
         }
         _ => {}
     }
 
     // Save config (for mistyped characters) before exiting
-    if let Some(config) = &app.config {
-        save_config(config).unwrap_or_else(|err| {
-            eprintln!("Failed to save config: {}", err);
-        });
-    }
+    save_config(&app.config).unwrap_or_else(|err| {
+        eprintln!("Failed to save config: {}", err);
+    });
 
     // Restore the terminal and return the result from run()
     ratatui::restore();
@@ -54,9 +52,9 @@ fn main() -> color_eyre::Result<()> {
 
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // Load config file or create it
-    app.config = Some(load_config().unwrap_or_else(|_err| {
+    app.config = load_config().unwrap_or_else(|_err| {
         Config::default()
-    }));
+    });
 
     // (For the ASCII option) - Generate initial random charset and set all ids to 0
     // (This for block is here because the default typing option is Ascii)
@@ -81,11 +79,11 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
     // If words file provided use that one instead of the default set
     if app.words.len() > 0 {
-        app.config.as_mut().unwrap().use_default_word_set = false;
+        app.config.use_default_word_set = false;
     }
     
     // Use the default word set if previously selected to use it
-    if app.config.as_ref().unwrap().use_default_word_set {
+    if app.config.use_default_word_set {
         app.words = default_words();
     }
 
@@ -94,9 +92,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // If text file was provided, and default text set was previously selected -
     // use the provided file contents instead from now on, and reset the
     // Text option position.
-    if app.text.len() > 0 && app.config.as_ref().unwrap().use_default_text_set {
-        app.config.as_mut().unwrap().use_default_text_set = false;
-        app.config.as_mut().unwrap().skip_len = 0;
+    if app.text.len() > 0 && app.config.use_default_text_set {
+        app.config.use_default_text_set = false;
+        app.config.skip_len = 0;
     }
 
     // This is for if user decided to switch between using the default text set
@@ -105,24 +103,24 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // Text option position to the beginning.
     // (This is here because the user can delete the provided text set, so this
     // if block resets the position in the Text option to the beginning)
-    if app.text.len() == 0 && !app.config.as_ref().unwrap().use_default_text_set {
-        app.config.as_mut().unwrap().skip_len = 0;
+    if app.text.len() == 0 && !app.config.use_default_text_set {
+        app.config.skip_len = 0;
     }
                                 
     // Use the default text set if previously selected to use it
-    if app.config.as_ref().unwrap().use_default_text_set {
+    if app.config.use_default_text_set {
         app.text = default_text();
     }
     
     // If the contents of the .config/ttypr/text.txt changed -
     // reset the position to the beginning
-    if app.config.as_mut().unwrap().last_text_txt_hash != calculate_text_txt_hash().ok() {
-        app.config.as_mut().unwrap().skip_len = 0;
+    if app.config.last_text_txt_hash != calculate_text_txt_hash().ok() {
+        app.config.skip_len = 0;
     }
     // Calculate the hash of the .config/ttypr/text.txt to
     // compare to the previously generated one and determine
     // whether the file contents have changed
-    app.config.as_mut().unwrap().last_text_txt_hash = calculate_text_txt_hash().ok();
+    app.config.last_text_txt_hash = calculate_text_txt_hash().ok();
 
     // Main application loop
     while app.running {
@@ -189,15 +187,13 @@ impl App {
     fn on_key_event(&mut self, key: KeyEvent) {
         // First boot page input (if toggled takes all input)
         // If Enter key is pressed sets first_boot to false in the config file
-        if self.config.as_ref().unwrap().first_boot {
+        if self.config.first_boot {
             match key.code {
                 KeyCode::Enter => {
-                    self.config.as_mut().unwrap().first_boot = false;
-                    if let Some(config) = &self.config {
-                        save_config(config).unwrap_or_else(|err| {
-                            eprintln!("Failed to save config: {}", err);
-                        });
-                    }
+                    self.config.first_boot = false;
+                    save_config(&self.config).unwrap_or_else(|err| {
+                        eprintln!("Failed to save config: {}", err);
+                    });
                     self.needs_clear = true;
                     self.needs_redraw = true;
                 }
@@ -251,7 +247,7 @@ impl App {
 
                     // Reset mistyped characters count
                     KeyCode::Char('r') => {
-                        self.config.as_mut().unwrap().mistyped_chars = HashMap::new();
+                        self.config.mistyped_chars = HashMap::new();
                         self.show_clear_mistyped_notification = true;
                         self.needs_redraw = true;
                         self.notification_time_count = Some(Instant::now());
@@ -266,11 +262,7 @@ impl App {
 
                     // Toggle counting mistyped characters
                     KeyCode::Char('c') => {
-                        if self.config.as_ref().unwrap().save_mistyped {
-                            self.config.as_mut().unwrap().save_mistyped = false;
-                        } else {
-                            self.config.as_mut().unwrap().save_mistyped = true;
-                        }
+                        self.config.save_mistyped = !self.config.save_mistyped;
                         self.show_mistyped_notification = true;
                         self.needs_clear = true;
                         self.needs_redraw = true;
@@ -279,11 +271,7 @@ impl App {
                     
                     // Toggle displaying notifications
                     KeyCode::Char('n') => {
-                        if self.config.as_ref().unwrap().show_notifications {
-                            self.config.as_mut().unwrap().show_notifications = false;
-                        } else {
-                            self.config.as_mut().unwrap().show_notifications = true;
-                        }
+                        self.config.show_notifications = !self.config.show_notifications;
                         self.show_notification_toggle = true;
                         self.needs_clear = true;
                         self.needs_redraw = true;
@@ -379,10 +367,10 @@ impl App {
                                 self.lines_len.clear();
 
                                 // Subtract how many "words" there were on the first three lines
-                                if self.config.as_ref().unwrap().skip_len >= self.first_text_gen_len {
-                                    self.config.as_mut().unwrap().skip_len -= self.first_text_gen_len;
+                                if self.config.skip_len >= self.first_text_gen_len {
+                                    self.config.skip_len -= self.first_text_gen_len;
                                 } else {
-                                    self.config.as_mut().unwrap().skip_len = 0;
+                                    self.config.skip_len = 0;
                                 }
                                 self.first_text_gen_len = 0;
 
@@ -445,7 +433,7 @@ impl App {
                                     }
 
                                     // Remember to use the default word set
-                                    self.config.as_mut().unwrap().use_default_word_set = true;
+                                    self.config.use_default_word_set = true;
 
                                     self.needs_redraw = true;
                                 }
@@ -476,7 +464,7 @@ impl App {
                                     }
                                     
                                     // Remember to use the default text set
-                                    self.config.as_mut().unwrap().use_default_text_set = true;
+                                    self.config.use_default_text_set = true;
 
                                     self.needs_redraw = true;
                                 }
