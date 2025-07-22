@@ -101,7 +101,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     );
 
     // Cleared mistyped characters count display
-    if app.show_clear_mistyped_notification && app.config.show_notifications {
+    if app.notifications.clear_mistyped && app.config.show_notifications {
         let clear_mistyped_notification_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -114,7 +114,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     // Mistyped characters count toggle display
-    if app.show_mistyped_notification && app.config.show_notifications {
+    if app.notifications.mistyped && app.config.show_notifications {
         let mistyped_chars_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -134,7 +134,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     // Notification toggle display
-    if app.show_notification_toggle {
+    if app.notifications.toggle {
         let notification_toggle_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -160,7 +160,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     // Typing mode selection display (Menu, Typing)
-    if app.show_mode_notification && app.config.show_notifications {
+    if app.notifications.mode && app.config.show_notifications {
         let mode_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -180,7 +180,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
     
     // Typing option selection display (Ascii, Words, Text)
-    if app.show_option_notification && app.config.show_notifications {
+    if app.notifications.option && app.config.show_notifications {
         let option_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -298,7 +298,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                 frame.render_widget(no_words_message, area);
             } else {
                 // Separating vector of all the colored characters into vector of 3 lines, each line_len long
-                // and making them List itelet block = Block::bordered().title("Block");ms, to display as a List widget
+                // and making them List items, to display as a List widget
                 let mut three_lines = vec![];
                 let mut skip_len = 0;
                 for i in 0..3 {

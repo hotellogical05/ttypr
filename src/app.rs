@@ -3,6 +3,28 @@ use std::time::{Duration, Instant};
 use rand::Rng;
 use ttypr::{Config, gen_random_ascii_char};
 
+pub struct Notifications {
+    pub mode: bool,
+    pub option: bool,
+    pub toggle: bool,
+    pub mistyped: bool,
+    pub clear_mistyped: bool,
+    pub time_count: Option<Instant>,
+}
+
+impl Notifications {
+    pub fn new() -> Notifications {
+        Notifications {
+            mode: false,
+            option: false,
+            toggle: false,
+            mistyped: false,
+            clear_mistyped: false,
+            time_count: None,
+        }
+    }
+}
+
 pub struct App {
     pub running: bool,
     pub needs_redraw: bool,
@@ -16,12 +38,7 @@ pub struct App {
     pub current_mode: CurrentMode,
     pub current_typing_option: CurrentTypingOption,
     pub words: Vec<String>,
-    pub show_mode_notification: bool,
-    pub show_option_notification: bool,
-    pub show_notification_toggle: bool,
-    pub show_mistyped_notification: bool,
-    pub show_clear_mistyped_notification: bool,
-    pub notification_time_count: Option<Instant>,
+    pub notifications: Notifications,
     pub config: Config,
     pub show_help: bool,
     pub show_mistyped: bool,
@@ -56,12 +73,7 @@ impl App {
             current_mode: CurrentMode::Menu,
             current_typing_option: CurrentTypingOption::Ascii,
             words: vec![],
-            show_mode_notification: false,
-            show_option_notification: false,
-            show_notification_toggle: false,
-            show_mistyped_notification: false,
-            show_clear_mistyped_notification: false,
-            notification_time_count: None,
+            notifications: Notifications::new(),
             config: Config::default(),
             show_help: false,
             show_mistyped: false,
@@ -79,27 +91,27 @@ impl App {
     pub fn on_tick(&mut self) {
         // If one of the notifications was triggered -
         // start counting
-        if self.show_option_notification || 
-           self.show_mode_notification || 
-           self.show_notification_toggle || 
-           self.show_mistyped_notification || 
-           self.show_clear_mistyped_notification {
+        if self.notifications.option || 
+           self.notifications.mode || 
+           self.notifications.toggle || 
+           self.notifications.mistyped || 
+           self.notifications.clear_mistyped {
 
             // Pressing a key that triggers a notification sets
             // notification_time_count to Some()
             // So the logic below runs
-            if let Some(shown_at) = self.notification_time_count {
+            if let Some(shown_at) = self.notifications.time_count {
                 // If two seconds have passed since a notification was triggered
                 if shown_at.elapsed() > Duration::from_secs(2) {
                     // Set displaying all notifications to false
-                    self.show_option_notification = false;
-                    self.show_mode_notification = false;
-                    self.show_notification_toggle = false;
-                    self.show_mistyped_notification = false;
-                    self.show_clear_mistyped_notification = false;
+                    self.notifications.option = false;
+                    self.notifications.mode = false;
+                    self.notifications.toggle = false;
+                    self.notifications.mistyped = false;
+                    self.notifications.clear_mistyped = false;
 
                     // Stop the timer, clear and redraw the area
-                    self.notification_time_count = None;
+                    self.notifications.time_count = None;
                     self.needs_clear = true;
                     self.needs_redraw = true;
                 }
