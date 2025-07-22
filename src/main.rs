@@ -119,13 +119,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     if app.config.as_mut().unwrap().last_text_txt_hash != calculate_text_txt_hash().ok() {
         app.config.as_mut().unwrap().skip_len = 0;
     }
+    // Calculate the hash of the .config/ttypr/text.txt to
+    // compare to the previously generated one and determine
+    // whether the file contents have changed
     app.config.as_mut().unwrap().last_text_txt_hash = calculate_text_txt_hash().ok();
-
-    // Keep in first boot screen until Enter is pressed
-    while app.config.as_ref().unwrap().first_boot {
-        terminal.draw(|frame| render(frame, app))?; // Draw the ui
-        app.handle_crossterm_events()?; // Read terminal events
-    }
 
     // Main application loop
     while app.running {
@@ -201,6 +198,8 @@ impl App {
                             eprintln!("Failed to save config: {}", err);
                         });
                     }
+                    self.needs_clear = true;
+                    self.needs_redraw = true;
                 }
                 _ => {}
             }
