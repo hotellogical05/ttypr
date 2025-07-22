@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs, io};
 use rand::Rng;
 use serde::{ser::SerializeMap, Serialize, Deserialize, Serializer};
+use sha2::{Sha256, Digest};
 
 // Config struct to store all config values, is a part of the App struct
 #[derive(Serialize, Deserialize)]
@@ -13,6 +14,7 @@ pub struct Config {
     pub skip_len: usize,
     pub use_default_word_set: bool,
     pub use_default_text_set: bool,
+    pub last_text_txt_hash: Option<Vec<u8>>,
 }
 
 impl Default for Config {
@@ -25,6 +27,7 @@ impl Default for Config {
             skip_len: 0, // (For the text option) - To save position in the text
             use_default_word_set: false,
             use_default_text_set: false,
+            last_text_txt_hash: None,
         }
     }
 }
@@ -161,4 +164,20 @@ pub fn default_text() -> Vec<String> {
         .map(|w| w.to_string())
         .collect();
     default_text
+}
+
+// Calculates the hash of .config/ttypr/text.txt
+pub fn calculate_text_txt_hash() -> io::Result<Vec<u8>> {
+    // Get the home directory path
+    let home_path = home::home_dir().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::NotFound, "Home directory not found")
+    })?;
+
+    // Construct the full path to the text.txt file
+    let path = home_path.join(".config/ttypr/text.txt");
+
+    let file_bytes = fs::read(path)?;
+    let mut hasher = Sha256::new();
+    hasher.update(file_bytes);
+    Ok(hasher.finalize().to_vec())
 }

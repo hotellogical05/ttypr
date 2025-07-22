@@ -2,7 +2,17 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
 use std::{collections::HashMap, time::Instant};
-use ttypr::{default_text, default_words, gen_random_ascii_char, load_config, read_text_from_file, read_words_from_file, save_config, Config};
+use ttypr::{
+    default_text, 
+    default_words, 
+    gen_random_ascii_char, 
+    load_config, 
+    read_text_from_file, 
+    read_words_from_file, 
+    save_config, 
+    calculate_text_txt_hash,
+    Config
+};
 
 mod app;
 mod ui;
@@ -99,10 +109,17 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         app.config.as_mut().unwrap().skip_len = 0;
     }
                                 
-    // Use the text set if previously selected to use it
+    // Use the default text set if previously selected to use it
     if app.config.as_ref().unwrap().use_default_text_set {
         app.text = default_text();
     }
+    
+    // If the contents of the .config/ttypr/text.txt changed -
+    // reset the position to the beginning
+    if app.config.as_mut().unwrap().last_text_txt_hash != calculate_text_txt_hash().ok() {
+        app.config.as_mut().unwrap().skip_len = 0;
+    }
+    app.config.as_mut().unwrap().last_text_txt_hash = calculate_text_txt_hash().ok();
 
     // Keep in first boot screen until Enter is pressed
     while app.config.as_ref().unwrap().first_boot {
