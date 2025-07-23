@@ -32,6 +32,8 @@ cargo install ttypr
 **Typing mode:**
 
 - **ESC** - switch to Menu mode
+- **Character keys** - Type the corresponding characters
+- **Backspace** - Remove characters
 
 # Acknowledgements
 
