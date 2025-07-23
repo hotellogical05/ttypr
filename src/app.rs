@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use rand::Rng;
-use ttypr::{Config, gen_random_ascii_char};
+use crate::utils::{Config, gen_random_ascii_char};
 
 pub struct Notifications {
     pub mode: bool,

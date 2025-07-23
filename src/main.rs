@@ -2,24 +2,26 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
 use std::{collections::HashMap};
-use ttypr::{
-    default_text, 
-    default_words, 
-    gen_random_ascii_char, 
-    load_config, 
-    read_text_from_file, 
-    read_words_from_file, 
-    save_config, 
-    calculate_text_txt_hash,
-    Config
-};
 
 mod app;
 mod ui;
+mod utils;
 use crate::{
     app::{App, CurrentMode, CurrentTypingOption},
     ui::{draw_on_clear, render},
+    utils::{
+        default_text, 
+        default_words, 
+        gen_random_ascii_char, 
+        load_config, 
+        read_text_from_file, 
+        read_words_from_file, 
+        save_config, 
+        calculate_text_txt_hash,
+        Config
+    },
 };
+
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

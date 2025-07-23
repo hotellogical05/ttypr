@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Clear, List, ListItem}, 
     Frame
 };
-use ttypr::get_sorted_mistakes;
+use crate::utils::{get_sorted_mistakes};
 
 // Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
