@@ -23,6 +23,57 @@ impl Notifications {
             time_count: None,
         }
     }
+
+    /// Call this on each application tick to manage notification visibility.
+    /// Returns true if the UI needs to be updated.
+    pub fn on_tick(&mut self) -> bool {
+        if let Some(shown_at) = self.time_count {
+            if shown_at.elapsed() > Duration::from_secs(2) {
+                self.hide_all();
+                return true; // Indicates an update is needed
+            }
+        }
+        false
+    }
+
+    /// Hides all notifications and resets the timer.
+    fn hide_all(&mut self) {
+        self.mode = false;
+        self.option = false;
+        self.toggle = false;
+        self.mistyped = false;
+        self.clear_mistyped = false;
+        self.time_count = None;
+    }
+
+    fn trigger(&mut self) {
+        self.time_count = Some(Instant::now());
+    }
+
+    pub fn show_mode(&mut self) {
+        self.mode = true;
+        self.trigger();
+    }
+
+    pub fn show_option(&mut self) {
+        self.option = true;
+        self.trigger();
+    }
+
+    pub fn show_toggle(&mut self) {
+        self.toggle = true;
+        self.trigger();
+    }
+
+    pub fn show_mistyped(&mut self) {
+        self.mistyped = true;
+        self.trigger();
+    }
+
+    pub fn show_clear_mistyped(&mut self) {
+        self.clear_mistyped = true;
+        self.trigger();
+    }
 }
 
 pub struct App {
@@ -89,33 +140,9 @@ impl App {
 
     // Timer for notifications display
     pub fn on_tick(&mut self) {
-        // If one of the notifications was triggered -
-        // start counting
-        if self.notifications.option || 
-           self.notifications.mode || 
-           self.notifications.toggle || 
-           self.notifications.mistyped || 
-           self.notifications.clear_mistyped {
-
-            // Pressing a key that triggers a notification sets
-            // notification_time_count to Some()
-            // So the logic below runs
-            if let Some(shown_at) = self.notifications.time_count {
-                // If two seconds have passed since a notification was triggered
-                if shown_at.elapsed() > Duration::from_secs(2) {
-                    // Set displaying all notifications to false
-                    self.notifications.option = false;
-                    self.notifications.mode = false;
-                    self.notifications.toggle = false;
-                    self.notifications.mistyped = false;
-                    self.notifications.clear_mistyped = false;
-
-                    // Stop the timer, clear and redraw the area
-                    self.notifications.time_count = None;
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-            }
+        if self.notifications.on_tick() {
+            self.needs_clear = true;
+            self.needs_redraw = true;
         }
     }
 

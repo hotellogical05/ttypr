@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal};
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap};
 use ttypr::{
     default_text, 
     default_words, 
@@ -248,9 +248,8 @@ impl App {
                     // Reset mistyped characters count
                     KeyCode::Char('r') => {
                         self.config.mistyped_chars = HashMap::new();
-                        self.notifications.clear_mistyped = true;
+                        self.notifications.show_clear_mistyped();
                         self.needs_redraw = true;
-                        self.notifications.time_count = Some(Instant::now());
                     }
 
                     // Show most mistyped page
@@ -263,19 +262,17 @@ impl App {
                     // Toggle counting mistyped characters
                     KeyCode::Char('c') => {
                         self.config.save_mistyped = !self.config.save_mistyped;
-                        self.notifications.mistyped = true;
+                        self.notifications.show_mistyped();
                         self.needs_clear = true;
                         self.needs_redraw = true;
-                        self.notifications.time_count = Some(Instant::now());
                     }
                     
                     // Toggle displaying notifications
                     KeyCode::Char('n') => {
                         self.config.show_notifications = !self.config.show_notifications;
-                        self.notifications.toggle = true;
+                        self.notifications.show_toggle();
                         self.needs_clear = true;
                         self.needs_redraw = true;
-                        self.notifications.time_count = Some(Instant::now());
                     }
 
                     // Show help page
@@ -290,8 +287,7 @@ impl App {
 
                         // Option switch notification
                         self.needs_clear = true;
-                        self.notifications.option = true;
-                        self.notifications.time_count = Some(Instant::now());
+                        self.notifications.show_option();
 
                         // Switches current typing option
                         match self.current_typing_option {
@@ -406,8 +402,7 @@ impl App {
                         }
 
                         self.current_mode = CurrentMode::Typing;
-                        self.notifications.mode = true;
-                        self.notifications.time_count = Some(Instant::now());
+                        self.notifications.show_mode();
                         self.needs_redraw = true;
                     },
 
@@ -481,8 +476,7 @@ impl App {
                 match key.code {
                     KeyCode::Esc => { // Switch to Menu mode if ESC pressed
                         self.current_mode = CurrentMode::Menu;
-                        self.notifications.mode = true;
-                        self.notifications.time_count = Some(Instant::now());
+                        self.notifications.show_mode();
                         self.needs_redraw = true;
                     },
                     KeyCode::Char(c) => { // Add to input characters
