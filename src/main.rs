@@ -12,7 +12,6 @@ use crate::{
     utils::{
         default_text, 
         default_words, 
-        gen_random_ascii_char, 
         load_config, 
         read_text_from_file, 
         read_words_from_file, 
@@ -61,7 +60,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // (For the ASCII option) - Generate initial random charset and set all ids to 0
     // (This for block is here because the default typing option is Ascii)
     for _ in 0..app.line_len*3 {
-        app.charset.push_back(gen_random_ascii_char());
+        let random_ascii_char = app.gen_random_ascii_char();
+        app.charset.push_back(random_ascii_char);
         app.ids.push_back(0);
     }
 
@@ -300,6 +300,7 @@ impl App {
                                 self.charset.clear();
                                 self.input_chars.clear();
                                 self.ids.clear();
+                                self.lines_len.clear();
                                 
                                 // Only generate the lines if the words file was provided or the default set was chosen
                                 if self.words.len() == 0 {}
@@ -374,7 +375,8 @@ impl App {
 
                                 // Generate three lines worth of characters and ids
                                 for _ in 0..self.line_len*3 {
-                                    self.charset.push_back(gen_random_ascii_char());
+                                    let random_ascii_char = self.gen_random_ascii_char();
+                                    self.charset.push_back(random_ascii_char);
                                     self.ids.push_back(0);
                                 }
                                 

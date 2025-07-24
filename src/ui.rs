@@ -318,6 +318,7 @@ pub fn render(frame: &mut Frame, app: &App) {
             }
         }
         CurrentTypingOption::Text => {
+            // If no text file provided
             if app.text.len() == 0 {
                 let area = center(
                     frame.area(),

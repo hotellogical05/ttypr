@@ -1,5 +1,4 @@
 use std::{collections::HashMap, fs, io};
-use rand::Rng;
 use serde::{ser::SerializeMap, Serialize, Deserialize, Serializer};
 use sha2::{Sha256, Digest};
 
@@ -55,14 +54,6 @@ where
         map_serializer.serialize_entry(key, value)?;
     }
     map_serializer.end()
-}
-
-/// Generate a random ascii character
-pub fn gen_random_ascii_char() -> String {
-    let charset = vec!["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", "|", "\\", ":", ";", "\"", "'", "<", ">", ",", ".", "?", "/"];
-    let index = rand::rng().random_range(0..charset.len());
-    let character = charset[index];
-    character.to_string()
 }
 
 /// Loads config from .config/ttypr/config

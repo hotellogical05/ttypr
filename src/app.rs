@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use rand::Rng;
-use crate::utils::{Config, gen_random_ascii_char};
+use crate::utils::{Config};
 
 pub struct Notifications {
     pub mode: bool,
@@ -89,11 +89,11 @@ pub struct App {
     pub current_mode: CurrentMode,
     pub current_typing_option: CurrentTypingOption,
     pub words: Vec<String>,
+    pub text: Vec<String>,
     pub notifications: Notifications,
     pub config: Config,
     pub show_help: bool,
     pub show_mistyped: bool,
-    pub text: Vec<String>,
     pub first_text_gen_len: usize,
 }
 
@@ -107,6 +107,8 @@ pub enum CurrentTypingOption {
     Words,
     Text,
 }
+
+const ASCII_CHARSET: &[&str] = &["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", "|", "\\", ":", ";", "\"", "'", "<", ">", ",", ".", "?", "/"];
 
 impl App {
    // Construct a new instance of App
@@ -124,11 +126,11 @@ impl App {
             current_mode: CurrentMode::Menu,
             current_typing_option: CurrentTypingOption::Ascii,
             words: vec![],
+            text: vec![],
             notifications: Notifications::new(),
             config: Config::default(),
             show_help: false,
             show_mistyped: false,
-            text: vec![],
             first_text_gen_len: 0,
         }
     }
@@ -144,6 +146,24 @@ impl App {
             self.needs_clear = true;
             self.needs_redraw = true;
         }
+    }
+
+    /// Generate a random ascii character
+    pub fn gen_random_ascii_char(&mut self) -> String {
+        let index = rand::rng().random_range(0..ASCII_CHARSET.len());
+        let character = ASCII_CHARSET[index];
+        character.to_string()
+    }
+
+    // * lines_len
+    pub fn gen_one_line_of_ascii(&mut self) -> String {
+        let mut line_of_ascii = vec![];
+        for _ in 0..self.line_len {
+            let index = rand::rng().random_range(0..ASCII_CHARSET.len());
+            let character = ASCII_CHARSET[index];
+            line_of_ascii.push(character.to_string())
+        }
+        line_of_ascii.join("")
     }
 
     pub fn gen_one_line_of_words(&mut self) -> String {
@@ -218,7 +238,8 @@ impl App {
                         self.input_chars.pop_front();
                         self.ids.pop_front();
                     
-                        self.charset.push_back(gen_random_ascii_char());
+                        let random_ascii_char = self.gen_random_ascii_char();
+                        self.charset.push_back(random_ascii_char);
                         self.ids.push_back(0);
                     }
                 }
