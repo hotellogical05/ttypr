@@ -290,99 +290,7 @@ impl App {
                     }
 
                     // Typing option switch (ASCII, Words, Text)
-                    KeyCode::Char('o') => {
-
-                        // Option switch notification
-                        self.needs_clear = true;
-                        self.notifications.show_option();
-
-                        // Switches current typing option
-                        match self.current_typing_option {
-                            
-                            // If ASCII - switch to Words
-                            CurrentTypingOption::Ascii => {
-                                self.clear_typing_buffers();
-
-                                // Only generate the lines if the words file was provided or the default set was chosen
-                                if self.words.len() == 0 {}
-                                else {
-                                    // Generate three lines of words (charset)
-                                    for _ in 0..3 {
-                                        let one_line = self.gen_one_line_of_words();
-
-                                        // Push three lines worth of characters (from words) and ids
-                                        let characters: Vec<char> = one_line.chars().collect();
-                                        self.lines_len.push_back(characters.len());
-                                        for char in characters {
-                                            self.charset.push_back(char.to_string());
-                                            self.ids.push_back(0);
-                                        }
-                                    }
-                                }
-
-                                // Switch the typing option to Words
-                                self.current_typing_option = CurrentTypingOption::Words 
-                            },
-                            
-                            // If Words - switch to Text
-                            CurrentTypingOption::Words => { 
-                                self.clear_typing_buffers();
-
-                                // Only generate the lines if the text file was provided or the default text was chosen
-                                if self.text.len() == 0 {}
-                                else {
-                                    for _ in 0..3 {
-                                        let one_line = self.gen_one_line_of_text();
-
-                                        // Count for how many "words" there were on the first three lines
-                                        // to keep position on option switch and exit.
-                                        // Otherwise would always skip 3 lines down.
-                                        let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
-                                        self.first_text_gen_len += first_text_gen_len.len();
-
-                                        // Push a line of characters (from text) and ids
-                                        let characters: Vec<char> = one_line.chars().collect();
-                                        self.lines_len.push_back(characters.len());
-                                        for char in characters {
-                                            self.charset.push_back(char.to_string());
-                                            self.ids.push_back(0);
-                                        }
-                                    }
-                                }
-
-                                // Switch the typing option to Text
-                                self.current_typing_option = CurrentTypingOption::Text
-                            },
-
-                            // If Text - switch to ASCII
-                            CurrentTypingOption::Text => {
-                                self.clear_typing_buffers();
-
-                                // Subtract how many "words" there were on the first three lines
-                                if self.config.skip_len >= self.first_text_gen_len {
-                                    self.config.skip_len -= self.first_text_gen_len;
-                                } else {
-                                    self.config.skip_len = 0;
-                                }
-                                self.first_text_gen_len = 0;
-
-                                // Generate three lines worth of characters and ids
-                                for _ in 0..3 {
-                                    let one_line = self.gen_one_line_of_ascii();
-
-                                    let characters: Vec<char> = one_line.chars().collect();
-                                    self.lines_len.push_back(characters.len());
-                                    for char in characters {
-                                        self.charset.push_back(char.to_string());
-                                        self.ids.push_back(0);
-                                    }
-                                }
- 
-                                // Switch the typing option to Ascii
-                                self.current_typing_option = CurrentTypingOption::Ascii 
-                            }
-                        }
-                    }
+                    KeyCode::Char('o') => self.switch_typing_option(),
 
                     // Switch to Typing mode
                     KeyCode::Char('i') => { 
@@ -497,6 +405,85 @@ impl App {
                     _ => {}
                 }
             }
+        }
+    }
+
+    /// Switches to the next typing option and generates the text.
+    ///
+    /// This function cycles through the available typing options (ASCII, Words, Text)
+    /// and prepares the application state for the new option. It clears the
+    /// existing content in the buffers, generates new content, and signals to update the UI.
+    fn switch_typing_option(&mut self) {
+        self.needs_clear = true;
+        self.notifications.show_option();
+        self.clear_typing_buffers();
+
+        // Switches current typing option
+        match self.current_typing_option {
+            // If ASCII - switch to Words
+            CurrentTypingOption::Ascii => {
+                self.current_typing_option = CurrentTypingOption::Words;
+
+                // Only generate the lines if the words file was provided or the default set was chosen
+                if !self.words.is_empty() {
+                    // Generate three lines of words
+                    for _ in 0..3 {
+                        let one_line = self.gen_one_line_of_words();
+                        self.populate_charset_from_line(one_line);
+                    }
+                }
+            }
+            // If Words - switch to Text
+            CurrentTypingOption::Words => {
+                self.current_typing_option = CurrentTypingOption::Text;
+
+                // Only generate the lines if the text file was provided or the default text was chosen
+                if !self.text.is_empty() {
+                    for _ in 0..3 {
+                        let one_line = self.gen_one_line_of_text();
+                        // Count for how many "words" there were on the first three lines
+                        // to keep position on option switch and exit.
+                        // Otherwise would always skip 3 lines down.
+                        let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
+                        self.first_text_gen_len += first_text_gen_len.len();
+
+                        self.populate_charset_from_line(one_line);
+                    }
+                }
+            }
+            // If Text - switch to ASCII
+            CurrentTypingOption::Text => {
+                // Subtract how many "words" there were on the first three lines
+                if self.config.skip_len >= self.first_text_gen_len {
+                    self.config.skip_len -= self.first_text_gen_len;
+                } else {
+                    self.config.skip_len = 0;
+                }
+                self.first_text_gen_len = 0;
+
+                self.current_typing_option = CurrentTypingOption::Ascii;
+
+                // Generate three lines worth of characters and ids
+                for _ in 0..3 {
+                    let one_line = self.gen_one_line_of_ascii();
+                    self.populate_charset_from_line(one_line);
+                }
+            }
+        }
+    }
+
+    /// Populates the character set and related fields from a single line of text.
+    ///
+    /// This helper function takes a string, splits it into characters, and updates
+    /// the `charset`, `ids`, and `lines_len` fields of the `App` state. This is
+    /// used to prepare the text that the user will be prompted to type.
+    fn populate_charset_from_line(&mut self, one_line: String) {
+        // Push a line of characters and ids
+        let characters: Vec<char> = one_line.chars().collect();
+        self.lines_len.push_back(characters.len());
+        for char in characters {
+            self.charset.push_back(char.to_string());
+            self.ids.push_back(0);
         }
     }
 }
