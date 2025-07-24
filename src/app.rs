@@ -111,7 +111,7 @@ pub enum CurrentTypingOption {
 const ASCII_CHARSET: &[&str] = &["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", "|", "\\", ":", ";", "\"", "'", "<", ">", ",", ".", "?", "/"];
 
 impl App {
-   // Construct a new instance of App
+    /// Construct a new instance of App
     pub fn new() -> App {
         App { 
             running: true, 
@@ -135,12 +135,12 @@ impl App {
         }
     }
 
-    // Stop the application
+    /// Stop the application
     pub fn quit(&mut self) {
         self.running = false;
     }
 
-    // Timer for notifications display
+    /// Timer for notifications display
     pub fn on_tick(&mut self) {
         if self.notifications.on_tick() {
             self.needs_clear = true;
@@ -148,14 +148,7 @@ impl App {
         }
     }
 
-    /// Generate a random ascii character
-    pub fn gen_random_ascii_char(&mut self) -> String {
-        let index = rand::rng().random_range(0..ASCII_CHARSET.len());
-        let character = ASCII_CHARSET[index];
-        character.to_string()
-    }
-
-    // * lines_len
+    /// Constructs a line of random ASCII characters that fits within the configured line length.
     pub fn gen_one_line_of_ascii(&mut self) -> String {
         let mut line_of_ascii = vec![];
         for _ in 0..self.line_len {
@@ -166,6 +159,7 @@ impl App {
         line_of_ascii.join("")
     }
 
+    /// Constructs a line of random words that fits within the configured line length.
     pub fn gen_one_line_of_words(&mut self) -> String {
         let mut line_of_words = vec![];
         loop {
@@ -183,6 +177,7 @@ impl App {
         };
     }
 
+    /// Retrieves the next line of text from the source, respecting the configured line length.
     pub fn gen_one_line_of_text(&mut self) -> String {
         let mut line_of_text = vec![];
         loop {
@@ -203,6 +198,8 @@ impl App {
         }
     }
 
+    /// Set the ID for the last typed character to determine its color,
+    /// and record it if it was a mistype.
     pub fn update_id_field(&mut self) {
         // Number of characters the user typed, to compare with the charset
         let pos = self.input_chars.len() - 1;
@@ -222,61 +219,41 @@ impl App {
         }
     }
 
+    /// Manages the scrolling display by updating the character buffers.
+    ///
+    /// When the user finishes typing the second line, this function removes the
+    /// first line's data from the buffers and appends a new line, creating a
+    /// continuous scrolling effect.
     pub fn update_lines(&mut self) {
-        match self.current_typing_option {
-            
-             // For ASCII option
-            CurrentTypingOption::Ascii => {
-
-                // If reached the end of the second line, remove line_len
-                // (the first line) characters from the character set, the user
-                // inputted characters, and ids. Then push the same amount of
-                // new random characters to charset, and that amount of 0's to ids
-                if self.input_chars.len() == self.line_len*2 {
-                    for _ in 0..self.line_len {
-                        self.charset.pop_front();
-                        self.input_chars.pop_front();
-                        self.ids.pop_front();
-                    
-                        let random_ascii_char = self.gen_random_ascii_char();
-                        self.charset.push_back(random_ascii_char);
-                        self.ids.push_back(0);
-                    }
-                }
+        // If reached the end of the second line
+        if self.input_chars.len() == self.lines_len[0] + self.lines_len[1] {
+            // Remove first line amount of characters from the character set, 
+            // the user inputted characters, and ids. 
+            for _ in 0..self.lines_len[0] {
+                self.charset.pop_front();
+                self.input_chars.pop_front();
+                self.ids.pop_front();
             }
-            
-             // For Words and Text options
-            _ => {
-
-                // If reached the end of the second line, remove first line amount
-                // of characters (words) from the character set, the user
-                // inputted characters, and ids. Then push new line amount of 
-                // characters (words) to charset, and that amount of 0's to ids
-                if self.input_chars.len() == self.lines_len[0] + self.lines_len[1] {
-                    for _ in 0..self.lines_len[0] {
-                        self.charset.pop_front();
-                        self.input_chars.pop_front();
-                        self.ids.pop_front();
-                    }
-                
-                    let one_line = match self.current_typing_option {
-                        CurrentTypingOption::Words => { self.gen_one_line_of_words() },
-                        CurrentTypingOption::Text => { self.gen_one_line_of_text() },
-                        _ => String::new(),
-                    };
-                
-                    let characters: Vec<char> = one_line.chars().collect();
-                
-                    // Remove the length of the first line of words from the front, 
-                    // and push the new one to the back.
-                    self.lines_len.pop_front();
-                    self.lines_len.push_back(characters.len());
-                
-                    for char in characters {
-                        self.charset.push_back(char.to_string());
-                        self.ids.push_back(0);
-                    }
-                }
+        
+            // One line of ascii characters/words/text
+            let one_line = match self.current_typing_option {
+                CurrentTypingOption::Ascii => { self.gen_one_line_of_ascii() },
+                CurrentTypingOption::Words => { self.gen_one_line_of_words() },
+                CurrentTypingOption::Text => { self.gen_one_line_of_text() },
+            };
+        
+            // Convert that line into characters
+            let characters: Vec<char> = one_line.chars().collect();
+        
+            // Remove the length of the first line of characters from the front, 
+            // and push the new one to the back.
+            self.lines_len.pop_front();
+            self.lines_len.push_back(characters.len());
+        
+            // Push new amount of characters (words) to charset, and that amount of 0's to ids
+            for char in characters {
+                self.charset.push_back(char.to_string());
+                self.ids.push_back(0);
             }
         }
     }
