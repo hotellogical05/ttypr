@@ -59,11 +59,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
     // (For the ASCII option) - Generate initial random charset and set all ids to 0
     // (This for block is here because the default typing option is Ascii)
-//    for _ in 0..app.line_len*3 {
-//        let random_ascii_char = app.gen_random_ascii_char();
-//        app.charset.push_back(random_ascii_char);
-//        app.ids.push_back(0);
-//    }
     for _ in 0..3 {
         let one_line = app.gen_one_line_of_ascii();
 
@@ -383,6 +378,7 @@ impl App {
                                 }
                                 self.first_text_gen_len = 0;
 
+                                // Generate three lines worth of characters and ids
                                 for _ in 0..3 {
                                     let one_line = self.gen_one_line_of_ascii();
 
@@ -393,14 +389,7 @@ impl App {
                                         self.ids.push_back(0);
                                     }
                                 }
-
-                                // Generate three lines worth of characters and ids
-//                                for _ in 0..3 {
-//                                    let random_ascii_char = self.gen_random_ascii_char();
-//                                    self.charset.push_back(random_ascii_char);
-//                                    self.ids.push_back(0);
-//                                }
-                                
+ 
                                 // Switch the typing option to Ascii
                                 self.current_typing_option = CurrentTypingOption::Ascii 
                             }

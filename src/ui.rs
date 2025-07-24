@@ -9,7 +9,7 @@ use ratatui::{
 };
 use crate::utils::{get_sorted_mistakes};
 
-// Render the user interface
+/// Render the user interface
 pub fn render(frame: &mut Frame, app: &App) {
     // If first boot or the help page toggled display only this
     if app.config.first_boot || app.show_help {
@@ -367,14 +367,14 @@ pub fn render(frame: &mut Frame, app: &App) {
     } 
 }
 
-// Helper function to center a layout area
+/// Helper function to center a layout area
 pub fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
     let [area] = Layout::horizontal([horizontal]).flex(Flex::Center).areas(area);
     let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
     area
 }
 
-// Clear the entire area
+/// Clear the entire area
 pub fn draw_on_clear(f: &mut Frame) {
     let area = f.area(); // The area of the entire frame
     f.render_widget(Clear, area);

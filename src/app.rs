@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use rand::Rng;
 use crate::utils::{Config};
 
+/// Manages the state and display timer for transient notifications in the UI.
 pub struct Notifications {
     pub mode: bool,
     pub option: bool,
@@ -13,6 +14,7 @@ pub struct Notifications {
 }
 
 impl Notifications {
+    /// Creates a new `Notifications` instance with all flags turned off.
     pub fn new() -> Notifications {
         Notifications {
             mode: false,
@@ -46,36 +48,48 @@ impl Notifications {
         self.time_count = None;
     }
 
+    /// Starts the visibility timer for the currently active notification.
     fn trigger(&mut self) {
         self.time_count = Some(Instant::now());
     }
 
+    /// Shows a notification indicating a mode change.
     pub fn show_mode(&mut self) {
         self.mode = true;
         self.trigger();
     }
 
+    /// Shows a notification indicating a typing option change.
     pub fn show_option(&mut self) {
         self.option = true;
         self.trigger();
     }
 
+    /// Shows a notification indicating that notifications have been toggled.
     pub fn show_toggle(&mut self) {
         self.toggle = true;
         self.trigger();
     }
 
+    /// Shows a notification indicating that counting mistyped characters has been toggled.
     pub fn show_mistyped(&mut self) {
         self.mistyped = true;
         self.trigger();
     }
 
+    /// Shows a notification that the mistyped characters count has been cleared.
     pub fn show_clear_mistyped(&mut self) {
         self.clear_mistyped = true;
         self.trigger();
     }
 }
 
+/// Represents the main application state and logic.
+///
+/// This struct holds all the data necessary for the application to run, including
+/// UI state, typing data, user input, and configuration settings. It is
+/// responsible for handling user input, updating the state, and managing the
+/// overall application lifecycle.
 pub struct App {
     pub running: bool,
     pub needs_redraw: bool,
@@ -97,17 +111,23 @@ pub struct App {
     pub first_text_gen_len: usize,
 }
 
+/// Defines the major operational modes of the application.
 pub enum CurrentMode {
+    /// The menu mode , is used for managing settings, switching typing options,
+    /// viewing mistyped characters, and accessing the help page.
     Menu,
+    /// The typing mode, where the user actively practices typing.
     Typing,
 }
 
+/// Defines the different types of content the user can practice typing.
 pub enum CurrentTypingOption {
     Ascii,
     Words,
     Text,
 }
 
+/// A constant array of ASCII characters used for generating lines of random ASCII characters.
 const ASCII_CHARSET: &[&str] = &["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", "|", "\\", ":", ";", "\"", "'", "<", ">", ",", ".", "?", "/"];
 
 impl App {
