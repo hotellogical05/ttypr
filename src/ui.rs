@@ -248,23 +248,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     // Draw the typing area itself
     match app.current_typing_option {
         CurrentTypingOption::Ascii => {
-            // Separating vector of all the colored characters into vector of 3 lines, each line_len long
-            // and making them List items, to display as a List widget
-            let mut three_lines = vec![];
-            for i in 0..3 {
-                // Skip 0, 1, 2 lines, take line length of characters, and make a vector out of them
-                let line_span: Vec<Span> = span.iter().skip(i*app.line_len).take(app.line_len).map(|c| {
-                    c.clone()
-                }).collect();
-                let line = Line::from(line_span);
-                let item = ListItem::new(line);
-                three_lines.push(item); // Push the line
-                three_lines.push(ListItem::new("")); // Push an empty space to separate lines
-            }
-
-            // Make a List widget out of list items and render it in the middle
-            let list = List::new(three_lines);
-            frame.render_widget(list, area);
+            render_typing_lines(frame, app, area, span);
         }
         CurrentTypingOption::Words => {
             // If no words file provided
@@ -297,24 +281,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                 let no_words_message = List::new(no_words_message);
                 frame.render_widget(no_words_message, area);
             } else {
-                // Separating vector of all the colored characters into vector of 3 lines, each line_len long
-                // and making them List items, to display as a List widget
-                let mut three_lines = vec![];
-                let mut skip_len = 0;
-                for i in 0..3 {
-                    let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
-                        c.clone()
-                    }).collect();
-                    let line = Line::from(line_span).alignment(Alignment::Center);
-                    let item = ListItem::new(line);
-                    three_lines.push(item); // Push the line
-                    three_lines.push(ListItem::new("")); // Push an empty space to separate lines
-                    skip_len += app.lines_len[i];
-                }
-            
-                // Make a List widget out of list items and render it in the middle
-                let list = List::new(three_lines);
-                frame.render_widget(list, area);
+                render_typing_lines(frame, app, area, span);
             }
         }
         CurrentTypingOption::Text => {
@@ -346,25 +313,36 @@ pub fn render(frame: &mut Frame, app: &App) {
                 let no_words_message = List::new(no_text_message);
                 frame.render_widget(no_words_message, area);
             } else {
-                let mut three_lines = vec![];
-                let mut skip_len = 0;
-                for i in 0..3 {
-                    let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
-                        c.clone()
-                    }).collect();
-                    let line = Line::from(line_span).alignment(Alignment::Center);
-                    let item = ListItem::new(line);
-                    three_lines.push(item); // Push the line
-                    three_lines.push(ListItem::new("")); // Push an empty space to separate lines
-                    skip_len += app.lines_len[i];
-                }
-
-                // Make a List widget out of list items and render it in the middle
-                let list = List::new(three_lines);
-                frame.render_widget(list, area);
+                render_typing_lines(frame, app, area, span);
             }        
         }
     } 
+}
+
+/// Renders the lines of text for the user to type.
+///
+/// This function takes the application state, a frame, a rendering area, and a vector of styled
+/// characters (`Span`s). It then splits the characters into three lines and displays them
+/// centered in the provided area.
+pub fn render_typing_lines(frame: &mut Frame, app: &App, area: Rect, span: Vec<Span>) {
+    // Separating vector of all the colored characters into vector of 3 lines, each line_len long
+    // and making them List items, to display as a List widget
+    let mut three_lines = vec![];
+    let mut skip_len = 0;
+    for i in 0..3 {
+        let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
+            c.clone()
+        }).collect();
+        let line = Line::from(line_span).alignment(Alignment::Center);
+        let item = ListItem::new(line);
+        three_lines.push(item); // Push the line
+        three_lines.push(ListItem::new("")); // Push an empty space to separate lines
+        skip_len += app.lines_len[i];
+    }
+
+    // Make a List widget out of list items and render it in the middle
+    let list = List::new(three_lines);
+    frame.render_widget(list, area);
 }
 
 /// Helper function to center a layout area
