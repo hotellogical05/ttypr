@@ -277,4 +277,15 @@ impl App {
             }
         }
     }
+
+    /// Empties the buffers that store the character set, user input, IDs and line lengths.
+    ///
+    /// This is called when the typing option is switched - to reset the buffers for 
+    /// the new content.
+    pub fn clear_typing_buffers(&mut self) {
+        self.charset.clear();
+        self.input_chars.clear();
+        self.ids.clear();
+        self.lines_len.clear();
+    }
 }

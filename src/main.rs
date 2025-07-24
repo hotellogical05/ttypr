@@ -301,12 +301,8 @@ impl App {
                             
                             // If ASCII - switch to Words
                             CurrentTypingOption::Ascii => {
-                                // Clear charset, input_chars and ids.
-                                self.charset.clear();
-                                self.input_chars.clear();
-                                self.ids.clear();
-                                self.lines_len.clear();
-                                
+                                self.clear_typing_buffers();
+
                                 // Only generate the lines if the words file was provided or the default set was chosen
                                 if self.words.len() == 0 {}
                                 else {
@@ -330,11 +326,7 @@ impl App {
                             
                             // If Words - switch to Text
                             CurrentTypingOption::Words => { 
-                                // Clear charset, input_chars, ids and length of lines
-                                self.charset.clear();
-                                self.input_chars.clear();
-                                self.ids.clear();
-                                self.lines_len.clear();
+                                self.clear_typing_buffers();
 
                                 // Only generate the lines if the text file was provided or the default text was chosen
                                 if self.text.len() == 0 {}
@@ -364,11 +356,7 @@ impl App {
 
                             // If Text - switch to ASCII
                             CurrentTypingOption::Text => {
-                                // Clear charset, input_chars, ids and length of lines
-                                self.charset.clear();
-                                self.input_chars.clear();
-                                self.ids.clear();
-                                self.lines_len.clear();
+                                self.clear_typing_buffers();
 
                                 // Subtract how many "words" there were on the first three lines
                                 if self.config.skip_len >= self.first_text_gen_len {
