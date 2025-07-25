@@ -9,90 +9,26 @@ use ratatui::{
 };
 use crate::utils::{get_sorted_mistakes};
 
-/// Render the user interface
+/// Renders the entire user interface based on the application's current state.
+///
+/// This function acts as a dispatcher, determining which screen to render based on the app's
+/// state flags like `first_boot`, `show_help`, and `show_mistyped`.
 pub fn render(frame: &mut Frame, app: &App) {
-    // If first boot or the help page toggled display only this
     if app.config.first_boot || app.show_help {
-        let first_boot_message_area = center(
-            frame.area(),
-            Constraint::Length(60),
-            Constraint::Length(25),
-        );
-
-        let first_boot_message = vec![
-            Line::from("The application starts in the Menu mode.").alignment(Alignment::Center),
-            Line::from(""),
-            Line::from(""),
-            Line::from("Menu mode:").alignment(Alignment::Center),
-            Line::from(""),
-            Line::from("            h - access the help page"),
-            Line::from("            q - exit the application"),
-            Line::from("            i - switch to Typing mode"),
-            Line::from("            o - switch Typing option (ASCII, Words, Text)"),
-            Line::from("            n - toggle notifications"),
-            Line::from("            c - toggle counting mistyped characters"),
-            Line::from("            w - display top mistyped characters"),
-            Line::from("            r - clear mistyped characters count"),
-            Line::from(""),
-            Line::from(""),
-            Line::from("Typing mode:").alignment(Alignment::Center),
-            Line::from(""),
-            Line::from("            ESC - switch to Menu mode"),
-            Line::from(""),
-            Line::from(""),
-            Line::from(""),
-            Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
-        ];
-
-        let first_boot_message: Vec<_> = first_boot_message
-            .into_iter()
-            .map(ListItem::new)
-            .collect();
-
-        let first_boot_message = List::new(first_boot_message);
-        frame.render_widget(first_boot_message, first_boot_message_area);
-
+        render_help_screen(frame);
         return;
     }
 
-    // Most mistyped characters display
     if app.show_mistyped {
-        let sorted_mistakes = get_sorted_mistakes(&app.config.mistyped_chars);
-        let sorted_mistakes: Vec<(String, usize)> = sorted_mistakes.iter().take(15).map(|(k, v)| (k.to_string(), **v)).collect();
-
-        let mut mistake_lines: Vec<ListItem> = vec![];
-
-        let mistyped_title = vec![
-            ListItem::new(Line::from("Most mistyped characters")),
-            ListItem::new(Line::from("")),
-            ListItem::new(Line::from("")),
-        ];
-        for item in mistyped_title { mistake_lines.push(item) }
-
-        for (mistake, count) in sorted_mistakes {
-            let line = Line::from(format!("{}: {}", mistake, count)).alignment(Alignment::Center);
-            mistake_lines.push(ListItem::new(line));
-        }
-
-        let enter_button = vec![
-            ListItem::new(Line::from("")),
-            ListItem::new(Line::from("")),
-            ListItem::new(Line::from("")),
-            ListItem::new(Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)),
-        ];
-        for item in enter_button { mistake_lines.push(item) }
-
-        let mistakes_area = center(
-            frame.area(),
-            Constraint::Length(25),
-            Constraint::Length(25),
-        );
-
-        let list = List::new(mistake_lines);
-        frame.render_widget(list, mistakes_area);
+        render_mistakes_screen(frame, app);
         return;
     }
 
+    render_main_ui(frame, app);
+}
+
+/// Renders the main user interface, including the typing area and notifications.
+fn render_main_ui(frame: &mut Frame, app: &App) {
     // Where to display the lines
     let area = center(
         frame.area(), // The area of the entire frame
@@ -100,6 +36,96 @@ pub fn render(frame: &mut Frame, app: &App) {
         Constraint::Length(5), // Height, 5 - because spaces between them
     );
 
+    render_notifications(frame, app);
+    render_typing_area(frame, app, area);
+}
+
+/// Renders the help screen, which displays keybindings and instructions.
+///
+/// This screen is shown on the first boot or when the user explicitly requests it.
+fn render_help_screen(frame: &mut Frame) {
+    let first_boot_message_area = center(
+        frame.area(),
+        Constraint::Length(60),
+        Constraint::Length(25),
+    );
+
+    let first_boot_message = vec![
+        Line::from("The application starts in the Menu mode.").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from(""),
+        Line::from("Menu mode:").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from("            h - access the help page"),
+        Line::from("            q - exit the application"),
+        Line::from("            i - switch to Typing mode"),
+        Line::from("            o - switch Typing option (ASCII, Words, Text)"),
+        Line::from("            n - toggle notifications"),
+        Line::from("            c - toggle counting mistyped characters"),
+        Line::from("            w - display top mistyped characters"),
+        Line::from("            r - clear mistyped characters count"),
+        Line::from(""),
+        Line::from(""),
+        Line::from("Typing mode:").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from("            ESC - switch to Menu mode"),
+        Line::from(""),
+        Line::from(""),
+        Line::from(""),
+        Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+    ];
+
+    let first_boot_message: Vec<_> = first_boot_message
+        .into_iter()
+        .map(ListItem::new)
+        .collect();
+
+    let first_boot_message = List::new(first_boot_message);
+    frame.render_widget(first_boot_message, first_boot_message_area);
+}
+
+/// Renders the screen displaying the user's most frequently mistyped characters.
+fn render_mistakes_screen(frame: &mut Frame, app: &App) {
+    let sorted_mistakes = get_sorted_mistakes(&app.config.mistyped_chars);
+    // Limit the display to the top 15 most frequent mistakes.
+    let sorted_mistakes: Vec<(String, usize)> = sorted_mistakes.iter().take(15).map(|(k, v)| (k.to_string(), **v)).collect();
+
+    let mut mistake_lines: Vec<ListItem> = vec![];
+
+    let mistyped_title = vec![
+        ListItem::new(Line::from("Most mistyped characters")),
+        ListItem::new(Line::from("")),
+        ListItem::new(Line::from("")),
+    ];
+    for item in mistyped_title { mistake_lines.push(item) }
+
+    for (mistake, count) in sorted_mistakes {
+        let line = Line::from(format!("{}: {}", mistake, count)).alignment(Alignment::Center);
+        mistake_lines.push(ListItem::new(line));
+    }
+
+    let enter_button = vec![
+        ListItem::new(Line::from("")),
+        ListItem::new(Line::from("")),
+        ListItem::new(Line::from("")),
+        ListItem::new(Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)),
+    ];
+    for item in enter_button { mistake_lines.push(item) }
+
+    let mistakes_area = center(
+        frame.area(),
+        Constraint::Length(25),
+        Constraint::Length(25),
+    );
+
+    let list = List::new(mistake_lines);
+    frame.render_widget(list, mistakes_area);
+}
+
+/// Renders transient notifications at various positions on the screen.
+///
+/// These notifications provide feedback for actions like toggling settings, changing modes, etc.
+fn render_notifications(frame: &mut Frame, app: &App) {
     // Cleared mistyped characters count display
     if app.notifications.clear_mistyped && app.config.show_notifications {
         let clear_mistyped_notification_area = Layout::default()
@@ -181,6 +207,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     
     // Typing option selection display (Ascii, Words, Text)
     if app.notifications.option && app.config.show_notifications {
+        // Position the typing option selector in the top-right corner.
         let option_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -216,32 +243,31 @@ pub fn render(frame: &mut Frame, app: &App) {
         
         frame.render_widget(List::new(option_span), option_area[1]);
     }
+}
 
+/// Renders the core typing area where the user practices.
+///
+/// This function handles the display of the character set, user input, and messages for
+/// missing word/text files.
+fn render_typing_area(frame: &mut Frame, app: &App, area: Rect) {
     // A vector of colored characters
     let span: Vec<Span> = app.charset.iter().enumerate().map(|(i, c)| {
-
-        // If inputted character matches charset character add a green colored character that user inputted
-        if app.ids[i] == 1 {
-            Span::styled(c.to_string(), Style::new().fg(Color::Indexed(10)))
-
-        // If inputted character doesn't match charset character add a red colored character that user inputted
-        } else if app.ids[i] == 2 {
-            // If incorrectly inputted character is a space - add a "_" instead
-            if app.input_chars[i] == " " {
-                Span::styled("_".to_string(), Style::new().fg(Color::Indexed(9)))
-            } else {
-                // If incorrectly typed a space - add a "_" instead
-                if app.charset[i] == " " {
-                    Span::styled("_".to_string(), Style::new().fg(Color::Indexed(9)))
-                // Otherwise add a red colored mistyped character
-                } else {
-                    Span::styled(app.charset[i].to_string(), Style::new().fg(Color::Indexed(9)))
-                }
+        match app.ids[i] {
+            1 => { // Correct
+                Span::styled(c.to_string(), Style::new().fg(Color::Indexed(10)))
             }
-
-        // Otherwise add a grey colored character (hasn't been typed yet)
-        } else {
-            Span::styled(c.to_string(), Style::new().fg(Color::Indexed(8)))
+            2 => { // Incorrect
+                // Render incorrect spaces as underscores for better visibility.
+                let char_to_render = if app.input_chars[i] == " " || c == " " {
+                    "_"
+                } else {
+                    c
+                };
+                Span::styled(char_to_render.to_string(), Style::new().fg(Color::Indexed(9)))
+            }
+            _ => { // Untyped
+                Span::styled(c.to_string(), Style::new().fg(Color::Indexed(8)))
+            }
         }
     }).collect();
 
@@ -251,72 +277,64 @@ pub fn render(frame: &mut Frame, app: &App) {
             render_typing_lines(frame, app, area, span);
         }
         CurrentTypingOption::Words => {
-            // If no words file provided
-            if app.words.len() == 0 {
-                let area = center(
-                    frame.area(),
-                    Constraint::Length(50),
-                    Constraint::Length(15),
-                );
-
-                let no_words_message = vec![
-                    Line::from("In order to use the Words typing option").alignment(Alignment::Center),
-                    Line::from("you need to have a:").alignment(Alignment::Center),
-                    Line::from(""), // Push an empty space to separate lines
-                    Line::from("~/.config/ttypr/words.txt").alignment(Alignment::Center),
-                    Line::from(""),
-                    Line::from("The formatting is just words separated by spaces").alignment(Alignment::Center),
-                    Line::from(""),
-                    Line::from("Or you can use the default one by pressing Enter").alignment(Alignment::Center),
-                    Line::from(""),
-                    Line::from(""),
-                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
-                ];
-
-                let no_words_message: Vec<_> = no_words_message
-                    .into_iter()
-                    .map(ListItem::new)
-                    .collect();
-
-                let no_words_message = List::new(no_words_message);
-                frame.render_widget(no_words_message, area);
+            if app.words.is_empty() {
+                render_file_not_found_message(frame, "Words", "~/.config/ttypr/words.txt", Some("The formatting is just words separated by spaces"));
             } else {
                 render_typing_lines(frame, app, area, span);
             }
         }
         CurrentTypingOption::Text => {
-            // If no text file provided
-            if app.text.len() == 0 {
-                let area = center(
-                    frame.area(),
-                    Constraint::Length(50),
-                    Constraint::Length(15),
-                );
-
-                let no_text_message = vec![
-                    Line::from("In order to use the Text typing option").alignment(Alignment::Center),
-                    Line::from("you need to have a:").alignment(Alignment::Center),
-                    Line::from(""), // Push an empty space to separate lines
-                    Line::from("~/.config/ttypr/text.txt").alignment(Alignment::Center),
-                    Line::from(""),
-                    Line::from("Or you can use the default one by pressing Enter").alignment(Alignment::Center),
-                    Line::from(""),
-                    Line::from(""),
-                    Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
-                ];
-
-                let no_text_message: Vec<_> = no_text_message
-                    .into_iter()
-                    .map(ListItem::new)
-                    .collect();
-
-                let no_words_message = List::new(no_text_message);
-                frame.render_widget(no_words_message, area);
+            if app.text.is_empty() {
+                render_file_not_found_message(frame, "Text", "~/.config/ttypr/text.txt", None);
             } else {
                 render_typing_lines(frame, app, area, span);
             }        
         }
     } 
+}
+
+/// Renders a message indicating that a required file (e.g., for words or text) was not found.
+///
+/// # Arguments
+///
+/// * `frame` - The mutable frame to draw on.
+/// * `option_name` - The name of the typing option (e.g., "Words", "Text").
+/// * `file_path` - The expected path of the missing file.
+/// * `extra_line` - An optional extra line of context, like formatting instructions.
+fn render_file_not_found_message(frame: &mut Frame, option_name: &str, file_path: &str, extra_line: Option<&str>) {
+    let area = center(
+        frame.area(),
+        Constraint::Length(50),
+        Constraint::Length(15),
+    );
+
+    let mut message_lines = vec![
+        Line::from(format!("In order to use the {} typing option", option_name)).alignment(Alignment::Center),
+        Line::from("you need to have a:").alignment(Alignment::Center),
+        Line::from(""), // Push an empty space to separate lines
+        Line::from(file_path).alignment(Alignment::Center),
+        Line::from(""),
+    ];
+
+    if let Some(line) = extra_line {
+        message_lines.push(Line::from(line).alignment(Alignment::Center));
+        message_lines.push(Line::from(""));
+    }
+
+    message_lines.extend(vec![
+        Line::from("Or you can use the default one by pressing Enter").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from(""),
+        Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+    ]);
+
+    let list_items: Vec<_> = message_lines
+        .into_iter()
+        .map(ListItem::new)
+        .collect();
+
+    let list = List::new(list_items);
+    frame.render_widget(list, area);
 }
 
 /// Renders the lines of text for the user to type.
@@ -329,14 +347,17 @@ pub fn render_typing_lines(frame: &mut Frame, app: &App, area: Rect, span: Vec<S
     // and making them List items, to display as a List widget
     let mut three_lines = vec![];
     let mut skip_len = 0;
+    // The UI displays three lines of text at a time.
     for i in 0..3 {
+        // Use `skip()` and `take()` to create a view into the full character buffer for each line.
         let line_span: Vec<Span> = span.iter().skip(skip_len).take(app.lines_len[i]).map(|c| {
             c.clone()
         }).collect();
         let line = Line::from(line_span).alignment(Alignment::Center);
         let item = ListItem::new(line);
-        three_lines.push(item); // Push the line
-        three_lines.push(ListItem::new("")); // Push an empty space to separate lines
+        three_lines.push(item);
+        // Add an empty `ListItem` to create visual spacing between the lines.
+        three_lines.push(ListItem::new(""));
         skip_len += app.lines_len[i];
     }
 
