@@ -167,6 +167,7 @@ impl App {
     /// current configuration and adjusting any other relevant settings.
     pub fn on_exit(&mut self) {
         use crate::utils::save_config;
+
         // (If exited the application while being the Text option)
         // Subtract how many "words" there were on the first three lines
         match self.current_typing_option {
@@ -204,6 +205,7 @@ impl App {
             calculate_text_txt_hash, default_text, default_words, load_config,
             read_text_from_file, read_words_from_file,
         };
+
         // Load config file or create it
         self.config = load_config().unwrap_or_else(|_err| Config::default());
 
@@ -268,10 +270,12 @@ impl App {
         if self.config.last_text_txt_hash != calculate_text_txt_hash().ok() {
             self.config.skip_len = 0;
         }
+
         // Calculate the hash of the .config/ttypr/text.txt to
         // compare to the previously generated one and determine
         // whether the file contents have changed
         self.config.last_text_txt_hash = calculate_text_txt_hash().ok();
+
         Ok(())
     }
 
