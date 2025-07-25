@@ -321,7 +321,7 @@ impl App {
                     KeyCode::Enter => { 
                         match self.current_typing_option {
                             CurrentTypingOption::Words => {
-                                if self.words.len() == 0 {
+                                if self.words.is_empty() {
                                     // Get the default words set
                                     self.words = default_words();
 
@@ -329,12 +329,7 @@ impl App {
                                     // Keep track of the length of those lines in characters.
                                     for _ in 0..3 {
                                         let one_line = self.gen_one_line_of_words();
-                                        let characters: Vec<char> = one_line.chars().collect();
-                                        self.lines_len.push_back(characters.len());
-                                        for char in characters {
-                                            self.charset.push_back(char.to_string());
-                                            self.ids.push_back(0);
-                                        }
+                                        self.populate_charset_from_line(one_line);
                                     }
 
                                     // Remember to use the default word set
@@ -344,7 +339,8 @@ impl App {
                                 }
                             }
                             CurrentTypingOption::Text => {
-                                if self.text.len() == 0 {
+                                // Only generate the lines if the text file was provided or the default text was chosen
+                                if self.text.is_empty() {
                                     // Get the default sentences
                                     self.text = default_text();
 
@@ -358,16 +354,10 @@ impl App {
                                         // Otherwise would always skip 3 lines down.
                                         let first_text_gen_len: Vec<String> = one_line.split_whitespace().map(String::from).collect();
                                         self.first_text_gen_len += first_text_gen_len.len();
-
-                                        // Push a line of characters (from text) and ids
-                                        let characters: Vec<char> = one_line.chars().collect();
-                                        self.lines_len.push_back(characters.len());
-                                        for char in characters {
-                                            self.charset.push_back(char.to_string());
-                                            self.ids.push_back(0);
-                                        }
-                                    }
                                     
+                                        self.populate_charset_from_line(one_line);
+                                    }
+
                                     // Remember to use the default text set
                                     self.config.use_default_text_set = true;
 
