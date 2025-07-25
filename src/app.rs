@@ -221,25 +221,15 @@ impl App {
         }
 
         // (For the Words option) - Read the words from .config/ttypr/words.txt
-        // If doesn't exist - return an empty vector instead
-        self.words = match read_words_from_file() {
-            Ok(words) => words,
-            Err(_) => {
-                vec![]
-            }
-        };
+        // If it doesn't exist, it will default to an empty vector.
+        self.words = read_words_from_file().unwrap_or_default();
 
         // (For the Text option) - Read the text from .config/ttypr/text.txt
-        // If doesn't exist - return an empty vector instead
-        self.text = match read_text_from_file() {
-            Ok(text) => text,
-            Err(_) => {
-                vec![]
-            }
-        };
+        // If it doesn't exist, it will default to an empty vector.
+        self.text = read_text_from_file().unwrap_or_default();
 
         // If words file provided use that one instead of the default set
-        if self.words.len() > 0 {
+        if !self.words.is_empty() {
             self.config.use_default_word_set = false;
         }
 
@@ -253,7 +243,7 @@ impl App {
         // If text file was provided, and default text set was previously selected -
         // use the provided file contents instead from now on, and reset the
         // Text option position.
-        if self.text.len() > 0 && self.config.use_default_text_set {
+        if !self.text.is_empty() && self.config.use_default_text_set {
             self.config.use_default_text_set = false;
             self.config.skip_len = 0;
         }
@@ -264,7 +254,7 @@ impl App {
         // Text option position to the beginning.
         // (This is here because the user can delete the provided text set, so this
         // if block resets the position in the Text option to the beginning)
-        if self.text.len() == 0 && !self.config.use_default_text_set {
+        if self.text.is_empty() && !self.config.use_default_text_set {
             self.config.skip_len = 0;
         }
 
