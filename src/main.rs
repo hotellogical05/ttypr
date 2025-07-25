@@ -9,16 +9,7 @@ mod utils;
 use crate::{
     app::{App, CurrentMode, CurrentTypingOption},
     ui::{draw_on_clear, render},
-    utils::{
-        default_text, 
-        default_words, 
-        load_config, 
-        read_text_from_file, 
-        read_words_from_file, 
-        save_config, 
-        calculate_text_txt_hash,
-        Config
-    },
+    utils::{default_text, default_words, save_config},
 };
 
 
@@ -28,23 +19,7 @@ fn main() -> color_eyre::Result<()> {
     let mut app = App::new();
     let result = run(terminal, &mut app);
 
-    // (If exited the application while being the Text option)
-    // Subtract how many "words" there were on the first three lines 
-    match app.current_typing_option {
-        CurrentTypingOption::Text => {
-            if app.config.skip_len >= app.first_text_gen_len {
-                app.config.skip_len -= app.first_text_gen_len;
-            } else {
-                app.config.skip_len = 0;
-            }
-        }
-        _ => {}
-    }
-
-    // Save config (for mistyped characters) before exiting
-    save_config(&app.config).unwrap_or_else(|err| {
-        eprintln!("Failed to save config: {}", err);
-    });
+    app.on_exit();
 
     // Restore the terminal and return the result from run()
     ratatui::restore();
@@ -52,82 +27,7 @@ fn main() -> color_eyre::Result<()> {
 }
 
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
-    // Load config file or create it
-    app.config = load_config().unwrap_or_else(|_err| {
-        Config::default()
-    });
-
-    // (For the ASCII option) - Generate initial random charset and set all ids to 0
-    // (This for block is here because the default typing option is Ascii)
-    for _ in 0..3 {
-        let one_line = app.gen_one_line_of_ascii();
-
-        let characters: Vec<char> = one_line.chars().collect();
-        app.lines_len.push_back(characters.len());
-        for char in characters {
-            app.charset.push_back(char.to_string());
-            app.ids.push_back(0);
-        }
-    }
-
-    // (For the Words option) - Read the words from .config/ttypr/words.txt
-    // If doesn't exist - return an empty vector instead
-    app.words = match read_words_from_file() {
-        Ok(words) => words,
-        Err(_) => { vec![] }
-    };
-    
-    // (For the Text option) - Read the text from .config/ttypr/text.txt
-    // If doesn't exist - return an empty vector instead
-    app.text = match read_text_from_file() {
-        Ok(text) => text,
-        Err(_) => { vec![] }
-    };
-
-    // If words file provided use that one instead of the default set
-    if app.words.len() > 0 {
-        app.config.use_default_word_set = false;
-    }
-    
-    // Use the default word set if previously selected to use it
-    if app.config.use_default_word_set {
-        app.words = default_words();
-    }
-
-    // This is for if user decided to switch between using the default text set
-    // and a provided one.
-    // If text file was provided, and default text set was previously selected -
-    // use the provided file contents instead from now on, and reset the
-    // Text option position.
-    if app.text.len() > 0 && app.config.use_default_text_set {
-        app.config.use_default_text_set = false;
-        app.config.skip_len = 0;
-    }
-
-    // This is for if user decided to switch between using the default text set
-    // and a provided one.
-    // If file was not provided, and default text set is not selected - set the
-    // Text option position to the beginning.
-    // (This is here because the user can delete the provided text set, so this
-    // if block resets the position in the Text option to the beginning)
-    if app.text.len() == 0 && !app.config.use_default_text_set {
-        app.config.skip_len = 0;
-    }
-                                
-    // Use the default text set if previously selected to use it
-    if app.config.use_default_text_set {
-        app.text = default_text();
-    }
-    
-    // If the contents of the .config/ttypr/text.txt changed -
-    // reset the position to the beginning
-    if app.config.last_text_txt_hash != calculate_text_txt_hash().ok() {
-        app.config.skip_len = 0;
-    }
-    // Calculate the hash of the .config/ttypr/text.txt to
-    // compare to the previously generated one and determine
-    // whether the file contents have changed
-    app.config.last_text_txt_hash = calculate_text_txt_hash().ok();
+    app.setup()?;
 
     // Main application loop
     while app.running {
@@ -136,23 +36,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
         // If the user typed
         if app.typed {
-            match app.current_typing_option {
-                CurrentTypingOption::Ascii => {
-                    app.update_id_field();
-                    app.update_lines(); // Only does anything if reached the end of the second line
-                    app.typed = false;
-                }
-                CurrentTypingOption::Words => {
-                    app.update_id_field();
-                    app.update_lines();
-                    app.typed = false;
-                }
-                CurrentTypingOption::Text => {
-                    app.update_id_field();
-                    app.update_lines();
-                    app.typed = false;
-                }
-            }
+            app.update_id_field();
+            app.update_lines();
+            app.typed = false;
         }
 
         // Clear the entire area
@@ -212,12 +98,7 @@ impl App {
         // Help page input (if toggled takes all input)
         if self.show_help {
             match key.code {
-                KeyCode::Enter => {
-                    self.show_help = false;
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-                KeyCode::Char('h') => {
+                KeyCode::Enter | KeyCode::Char('h') => {
                     self.show_help = false;
                     self.needs_clear = true;
                     self.needs_redraw = true;
@@ -230,12 +111,7 @@ impl App {
         // Most mistyped page input (if toggled takes all input)
         if self.show_mistyped {
             match key.code {
-                KeyCode::Enter => {
-                    self.show_mistyped = false;
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-                KeyCode::Char('w') => {
+                KeyCode::Enter | KeyCode::Char('w') => {
                     self.show_mistyped = false;
                     self.needs_clear = true;
                     self.needs_redraw = true;
