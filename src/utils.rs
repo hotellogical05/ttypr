@@ -102,9 +102,9 @@ fn load_items_from_file(filename: &str) -> io::Result<Vec<String>> {
     let file_path = get_config_dir()?.join(filename);
     let content = fs::read_to_string(file_path)?;
     let items = content
-        .split_whitespace() // Split the string by whitespace.
-        .map(String::from)  // Convert each slice into an owned String.
-        .collect();         // Collect the Strings into a Vec<String>.
+        .split_whitespace()
+        .map(String::from)
+        .collect();
     Ok(items)
 }
 
