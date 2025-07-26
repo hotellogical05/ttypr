@@ -20,7 +20,7 @@ _ttypr_ is a simple, lightweight typing practice application that runs in your t
 ## Features
 
 - **Multiple Typing Modes:** Practice with ASCII characters, random words, or your own text.
-- **Real-time Feedback:** Get immediate feedback on your typing speed and accuracy.
+- **Real-time Feedback:** Get immediate feedback on your accuracy.
 - **Mistake Analysis:** Track your most commonly mistyped characters.
 - **Customizable:** Toggle notifications, character counting, and more.
 
