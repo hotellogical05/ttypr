@@ -701,3 +701,340 @@ impl App {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread;
+
+    #[test]
+    fn test_notifications_on_tick() {
+        let mut notifications = Notifications::new();
+
+        // Should return false when no notification is active
+        assert!(!notifications.on_tick());
+
+        // Show a notification to start the timer
+        notifications.show_mode();
+        assert!(notifications.mode);
+        assert!(notifications.time_count.is_some());
+
+        // Should still return false immediately after
+        assert!(!notifications.on_tick());
+
+        // Wait for more than 2 seconds
+        thread::sleep(Duration::from_secs(3));
+
+        // Now on_tick should return true and hide notifications
+        assert!(notifications.on_tick());
+        assert!(!notifications.mode);
+        assert!(notifications.time_count.is_none());
+    }
+
+    #[test]
+    fn test_notifications_hide_all() {
+        let mut notifications = Notifications::new();
+
+        // Show some notifications
+        notifications.show_mode();
+        notifications.show_option();
+        notifications.show_toggle();
+        notifications.show_mistyped();
+        notifications.show_clear_mistyped();
+
+        // Hide them
+        notifications.hide_all();
+
+        // Check that all flags are false
+        assert!(!notifications.mode);
+        assert!(!notifications.option);
+        assert!(!notifications.toggle);
+        assert!(!notifications.mistyped);
+        assert!(!notifications.clear_mistyped);
+        assert!(notifications.time_count.is_none());
+    }
+
+    #[test]
+    fn test_notifications_trigger() {
+        let mut notifications = Notifications::new();
+
+        // Timer should not be set initially
+        assert!(notifications.time_count.is_none());
+
+        // Trigger the timer
+        notifications.trigger();
+
+        // Timer should now be set
+        assert!(notifications.time_count.is_some());
+    }
+
+    #[test]
+    fn test_notifications_show_methods() {
+        let mut notifications = Notifications::new();
+
+        // Test show_mode
+        notifications.show_mode();
+        assert!(notifications.mode);
+        assert!(notifications.time_count.is_some());
+        notifications.hide_all(); // Reset for next test
+
+        // Test show_option
+        notifications.show_option();
+        assert!(notifications.option);
+        assert!(notifications.time_count.is_some());
+        notifications.hide_all();
+
+        // Test show_toggle
+        notifications.show_toggle();
+        assert!(notifications.toggle);
+        assert!(notifications.time_count.is_some());
+        notifications.hide_all();
+
+        // Test show_mistyped
+        notifications.show_mistyped();
+        assert!(notifications.mistyped);
+        assert!(notifications.time_count.is_some());
+        notifications.hide_all();
+
+        // Test show_clear_mistyped
+        notifications.show_clear_mistyped();
+        assert!(notifications.clear_mistyped);
+        assert!(notifications.time_count.is_some());
+    }
+
+    #[test]
+    fn test_app_on_exit() {
+        // Scenario 1: In Text mode, skip_len should be correctly decremented.
+        let mut app1 = App::new();
+        app1.current_typing_option = CurrentTypingOption::Text;
+        app1.config.skip_len = 100;
+        app1.first_text_gen_len = 30;
+        app1.on_exit();
+        assert_eq!(app1.config.skip_len, 70);
+
+        // Scenario 2: In Text mode, if skip_len < first_text_gen_len, it should be reset to 0.
+        let mut app2 = App::new();
+        app2.current_typing_option = CurrentTypingOption::Text;
+        app2.config.skip_len = 20;
+        app2.first_text_gen_len = 30;
+        app2.on_exit();
+        assert_eq!(app2.config.skip_len, 0);
+
+        // Scenario 3: If not in Text mode, skip_len should remain unchanged.
+        let mut app3 = App::new();
+        app3.current_typing_option = CurrentTypingOption::Words;
+        app3.config.skip_len = 100;
+        app3.first_text_gen_len = 30;
+        app3.on_exit();
+        assert_eq!(app3.config.skip_len, 100);
+    }
+
+    #[test]
+    fn test_app_gen_one_line_of_ascii() {
+        let mut app = App::new();
+        app.line_len = 50;
+        let line = app.gen_one_line_of_ascii();
+        assert_eq!(line.chars().count(), 50);
+
+        app.line_len = 10;
+        let line = app.gen_one_line_of_ascii();
+        assert_eq!(line.chars().count(), 10);
+    }
+
+    #[test]
+    fn test_app_gen_one_line_of_words() {
+        let mut app = App::new();
+        app.line_len = 50;
+        app.words = vec!["hello".to_string(), "world".to_string(), "this".to_string(), "is".to_string(), "a".to_string(), "test".to_string()];
+
+        let line = app.gen_one_line_of_words();
+        
+        // Check that the line is not empty
+        assert!(!line.is_empty());
+
+        // Check that the line length is within the limit
+        assert!(line.chars().count() <= app.line_len);
+
+        // Check with a smaller line length
+        app.line_len = 10;
+        let line = app.gen_one_line_of_words();
+        assert!(!line.is_empty());
+        assert!(line.chars().count() <= app.line_len);
+    }
+
+    #[test]
+    fn test_app_gen_one_line_of_text() {
+        let mut app = App::new();
+        app.line_len = 20;
+        app.text = "This is a sample text for testing purposes."
+            .split_whitespace()
+            .map(String::from)
+            .collect();
+        app.config.skip_len = 0;
+
+        // First line generation
+        let line1 = app.gen_one_line_of_text();
+        assert_eq!(line1, "This is a sample");
+        assert_eq!(app.config.skip_len, 4); // Should have processed 4 words
+
+        // Second line generation
+        let line2 = app.gen_one_line_of_text();
+        assert_eq!(line2, "text for testing");
+        assert_eq!(app.config.skip_len, 7);
+
+        // Third line generation, testing wrap-around
+        let line3 = app.gen_one_line_of_text();
+        assert_eq!(line3, "purposes. This is a");
+        assert_eq!(app.config.skip_len, 3); // Wrapped around and used 3 words
+    }
+
+    #[test]
+    fn test_app_update_id_field() {
+        let mut app = App::new();
+        app.charset = VecDeque::from(vec!["a".to_string(), "b".to_string(), "c".to_string()]);
+        app.ids = VecDeque::from(vec![0, 0, 0]);
+        
+        // --- Test 1: Correct character ---
+        app.input_chars.push_back("a".to_string());
+        app.update_id_field();
+        assert_eq!(app.ids[0], 1);
+
+        // --- Test 2: Incorrect character, without saving mistypes ---
+        app.config.save_mistyped = false;
+        app.input_chars.push_back("x".to_string()); // Correct char is "b"
+        app.update_id_field();
+        assert_eq!(app.ids[1], 2);
+        assert!(app.config.mistyped_chars.is_empty()); // Should not record
+
+        // --- Test 3: Incorrect character, with saving mistypes ---
+        app.config.save_mistyped = true;
+        app.input_chars.push_back("y".to_string()); // Correct char is "c"
+        app.update_id_field();
+        assert_eq!(app.ids[2], 2);
+        assert_eq!(*app.config.mistyped_chars.get("c").unwrap(), 1); // "c" was mistyped once
+    }
+
+    #[test]
+    fn test_app_update_lines() {
+        let mut app = App::new();
+        app.line_len = 5; // Use a short line length for easier testing
+
+        // --- Setup initial state with 3 lines of content ---
+        app.current_typing_option = CurrentTypingOption::Ascii;
+        
+        // Line 1: "aaaaa"
+        app.charset.extend(vec!["a".to_string(); 5]);
+        app.ids.extend(vec![1; 5]); // Simulate typed
+        app.input_chars.extend(vec!["a".to_string(); 5]);
+        app.lines_len.push_back(5);
+
+        // Line 2: "bbbbb"
+        app.charset.extend(vec!["b".to_string(); 5]);
+        app.ids.extend(vec![1; 5]); // Simulate typed
+        app.input_chars.extend(vec!["b".to_string(); 5]);
+        app.lines_len.push_back(5);
+
+        // Line 3: "ccccc" (not yet typed)
+        app.charset.extend(vec!["c".to_string(); 5]);
+        app.ids.extend(vec![0; 5]);
+        app.lines_len.push_back(5);
+
+        // At this point, input_chars length is 10, which equals lines_len[0] + lines_len[1]
+        assert_eq!(app.input_chars.len(), app.lines_len[0] + app.lines_len[1]);
+
+        // --- Call the function to test ---
+        app.update_lines();
+
+        // --- Assert the results ---
+        // 1. First line's data should be removed from buffers
+        assert_eq!(app.input_chars.len(), 5);
+        assert_eq!(app.input_chars.front().unwrap(), "b");
+        
+        // 2. A new line should be generated and added
+        assert_eq!(app.lines_len.len(), 3); // Still 3 lines
+        assert_eq!(app.lines_len[0], 5); // Old line 2 is now line 1
+        assert_eq!(app.lines_len[1], 5); // Old line 3 is now line 2
+        assert_eq!(app.lines_len[2], 5); // New line 3 has been added
+        
+        assert_eq!(app.charset.len(), 15); // Total chars should be back to 15
+        assert_eq!(app.ids.len(), 15);      // Total ids should be back to 15
+        
+        // 3. The newly added ids should be 0 (untyped)
+        // (Check the last 5 elements of the ids VecDeque)
+        assert!(app.ids.iter().skip(10).all(|&id| id == 0));
+    }
+
+    #[test]
+    fn test_app_clear_typing_buffers() {
+        let mut app = App::new();
+
+        // Populate buffers with some data
+        app.charset.push_back("a".to_string());
+        app.input_chars.push_back("a".to_string());
+        app.ids.push_back(1);
+        app.lines_len.push_back(1);
+
+        // Ensure they are not empty before clearing
+        assert!(!app.charset.is_empty());
+        assert!(!app.input_chars.is_empty());
+        assert!(!app.ids.is_empty());
+        assert!(!app.lines_len.is_empty());
+
+        // Call the function
+        app.clear_typing_buffers();
+
+        // Assert that all buffers are empty
+        assert!(app.charset.is_empty());
+        assert!(app.input_chars.is_empty());
+        assert!(app.ids.is_empty());
+        assert!(app.lines_len.is_empty());
+    }
+
+    #[test]
+    fn test_app_switch_typing_option() {
+        let mut app = App::new();
+        // Provide some data for words and text modes
+        app.words = vec!["word1".to_string(), "word2".to_string()];
+        app.text = vec!["text1".to_string(), "text2".to_string()];
+        app.line_len = 10;
+        
+        // --- 1. Switch from ASCII (default) to Words ---
+        assert!(matches!(app.current_typing_option, CurrentTypingOption::Ascii));
+        app.switch_typing_option();
+        assert!(matches!(app.current_typing_option, CurrentTypingOption::Words));
+        assert!(!app.charset.is_empty()); // Should be populated with words
+        assert!(!app.lines_len.is_empty());
+
+        // --- 2. Switch from Words to Text ---
+        app.switch_typing_option();
+        assert!(matches!(app.current_typing_option, CurrentTypingOption::Text));
+        assert!(!app.charset.is_empty()); // Should be populated with text
+        assert_ne!(app.first_text_gen_len, 0); // Should be tracking generated text length
+
+        // --- 3. Switch from Text back to ASCII ---
+        app.switch_typing_option();
+        assert!(matches!(app.current_typing_option, CurrentTypingOption::Ascii));
+        assert!(!app.charset.is_empty()); // Should be populated with ASCII
+        assert_eq!(app.first_text_gen_len, 0); // Should be reset
+    }
+
+    #[test]
+    fn test_app_populate_charset_from_line() {
+        let mut app = App::new();
+        let line = "hello".to_string();
+        
+        app.populate_charset_from_line(line);
+
+        // Check lines_len
+        assert_eq!(app.lines_len.len(), 1);
+        assert_eq!(app.lines_len[0], 5);
+
+        // Check charset
+        let expected_charset = VecDeque::from(vec!["h".to_string(), "e".to_string(), "l".to_string(), "l".to_string(), "o".to_string()]);
+        assert_eq!(app.charset, expected_charset);
+
+        // Check ids
+        assert_eq!(app.ids.len(), 5);
+        assert!(app.ids.iter().all(|&id| id == 0)); // All ids should be 0
+    }
+}
