@@ -46,12 +46,14 @@ fn render_main_ui(frame: &mut Frame, app: &App) {
 fn render_help_screen(frame: &mut Frame) {
     let first_boot_message_area = center(
         frame.area(),
-        Constraint::Length(60),
-        Constraint::Length(25),
+        Constraint::Length(65),
+        Constraint::Length(30),
     );
 
     let first_boot_message = vec![
         Line::from("The application starts in the Menu mode.").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from("For larger font - increase the terminal font size.").alignment(Alignment::Center),
         Line::from(""),
         Line::from(""),
         Line::from("Menu mode:").alignment(Alignment::Center),
@@ -69,6 +71,8 @@ fn render_help_screen(frame: &mut Frame) {
         Line::from("Typing mode:").alignment(Alignment::Center),
         Line::from(""),
         Line::from("            ESC - switch to Menu mode"),
+        Line::from("            Character keys - Type the corresponding characters"),
+        Line::from("            Backspace - Remove characters"),
         Line::from(""),
         Line::from(""),
         Line::from(""),

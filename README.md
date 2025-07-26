@@ -1,4 +1,4 @@
-![](preview.gif)
+![](images/preview.gif)
 
 # ttypr
 
@@ -16,7 +16,11 @@ cargo install ttypr
 
 # Usage
 
-> **Note:** the application starts in the **Menu mode**.
+> **Notes:**
+>
+> - The application starts in the **Menu mode**.
+>
+> - For larger font - increase the terminal font size.
 
 **Menu mode:**
 
