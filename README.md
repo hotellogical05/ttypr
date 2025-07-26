@@ -1,20 +1,40 @@
-![](images/preview.gif)
+<div align="center">
+  <img src="images/social_preview.jpg" alt="ttypr - terminal typing practice" width="500" />
+</div>
 
-# ttypr
+<div align="center">
 
 **t**erminal **ty**ping **pr**actice
 
-Current typing options: **ASCII**, **Words** and **Text**
+_ttypr_ is a simple, lightweight typing practice application that runs in your terminal, built with [Rust](https://www.rust-lang.org/) and [Ratatui](https://ratatui.rs).
 
-Based on [Ratatui][RatatuiRepo]
+</div>
 
-# Installation
+<div align="center">
+
+[![Crates.io](https://img.shields.io/crates/v/ttypr?style=for-the-badge)](https://crates.io/crates/ttypr)
+[![GitHub repo](https://img.shields.io/badge/github-repo-blue?style=for-the-badge)](https://github.com/hotellogical05/ttypr)
+
+</div>
+
+## Features
+
+- **Multiple Typing Modes:** Practice with ASCII characters, random words, or your own text.
+- **Real-time Feedback:** Get immediate feedback on your typing speed and accuracy.
+- **Mistake Analysis:** Track your most commonly mistyped characters.
+- **Customizable:** Toggle notifications, character counting, and more.
+
+## Preview
+
+![](images/preview.gif)
+
+## Installation
 
 ```shell
 cargo install ttypr
 ```
 
-# Usage
+## Usage
 
 > **Notes:**
 >
@@ -22,7 +42,7 @@ cargo install ttypr
 >
 > - For larger font - increase the terminal font size.
 
-**Menu mode:**
+### Menu mode:
 
 - **h** - display the help page
 - **q** - exit the application
@@ -33,23 +53,21 @@ cargo install ttypr
 - **w** - display top mistyped characters
 - **r** - clear mistyped characters count
 
-**Typing mode:**
+### Typing mode:
 
 - **ESC** - switch to Menu mode
 - **Character keys** - Type the corresponding characters
 - **Backspace** - Remove characters
 
-# Acknowledgements
+## Acknowledgements
 
 - [filipriec][FilipsGitLab] - creating a vector of styled Spans idea, if needs_redraw rendering concept
-
 - Concept taken from: [Monkeytype][MonkeytypeLink]
 
-# License
+## License
 
 This project is licensed under the [MIT License][MITLicense].
 
-[RatatuiRepo]: https://github.com/ratatui/ratatui
 [FilipsGitLab]: https://gitlab.com/filipriec
 [MonkeytypeLink]: https://monkeytype.com
 [MITLicense]: https://github.com/hotellogical05/ttypr/blob/main/LICENSE
