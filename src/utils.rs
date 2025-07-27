@@ -100,6 +100,7 @@ fn load_items_from_file(dir: &Path, filename: &str) -> io::Result<Vec<String>> {
     let content = fs::read_to_string(file_path)?;
     let items = content
         .split_whitespace()
+        .filter(|word| word.len() <= 50)
         .map(String::from)
         .collect();
     Ok(items)
@@ -182,14 +183,23 @@ mod tests {
         let dir = tempdir().unwrap();
         let dir_path = dir.path();
 
-        // --- Test reading a words.txt file ---
+        // --- Test reading a standard words.txt file ---
         let words_content = "hello world from ttypr";
         fs::write(dir_path.join("words.txt"), words_content).unwrap();
         
         let words = read_words_from_file(dir_path).unwrap();
         assert_eq!(words, vec!["hello", "world", "from", "ttypr"]);
 
-        // --- Test reading a text.txt file ---
+        // --- Test filtering based on length ---
+        let long_word = "a".repeat(51);
+        let valid_word = "b".repeat(50);
+        let filter_content = format!("short {} another_short {}", long_word, valid_word);
+        fs::write(dir_path.join("filter_test.txt"), filter_content).unwrap();
+        
+        let filtered_items = load_items_from_file(dir_path, "filter_test.txt").unwrap();
+        assert_eq!(filtered_items, vec!["short", "another_short", &valid_word]);
+
+        // --- Test reading a standard text.txt file ---
         let text_content = "this is a line of text";
         fs::write(dir_path.join("text.txt"), text_content).unwrap();
 
