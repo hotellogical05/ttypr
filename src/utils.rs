@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io, path::PathBuf};
+use std::{collections::HashMap, fs, io, path::{Path, PathBuf}};
 use serde::{ser::SerializeMap, Serialize, Deserialize, Serializer};
 use sha2::{Sha256, Digest};
 
@@ -56,21 +56,20 @@ where
     map_serializer.end()
 }
 
-/// Gets the configuration directory path.
-fn get_config_dir() -> io::Result<PathBuf> {
+/// Gets the application's configuration directory path.
+pub fn get_config_dir() -> io::Result<PathBuf> {
     home::home_dir()
         .map(|path| path.join(".config/ttypr"))
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Home directory not found"))
 }
 
-/// Loads config from .config/ttypr/config
-/// If it doesn't exist - creates it with default values
-pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
-    let config_dir = get_config_dir()?;
+/// Loads config from a specified directory.
+/// If it doesn't exist, it creates a default config file.
+pub fn load_config(config_dir: &Path) -> Result<Config, Box<dyn std::error::Error>> {
     let config_path = config_dir.join("config");
 
     // Create the directory if it doesn't exist
-    fs::create_dir_all(&config_dir)?;
+    fs::create_dir_all(config_dir)?;
 
     // Check if file exists
     if !config_path.exists() {
@@ -87,19 +86,17 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     Ok(config)
 }
 
-/// Saves the config to .config/ttypr/config
-/// (the fields in the Config struct)
-pub fn save_config(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let config_path = get_config_dir()?.join("config");
+/// Saves the config to a specified directory.
+pub fn save_config(config: &Config, config_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let config_path = config_dir.join("config");
     let toml_string = toml::to_string_pretty(config)?;
     fs::write(config_path, toml_string)?;
     Ok(())
 }
 
-/// Loads a list of items from a given file in the config directory.
-/// The file is read, and its content is split by whitespace into a vector of strings.
-fn load_items_from_file(filename: &str) -> io::Result<Vec<String>> {
-    let file_path = get_config_dir()?.join(filename);
+/// Loads a list of items from a given file in a specified directory.
+fn load_items_from_file(dir: &Path, filename: &str) -> io::Result<Vec<String>> {
+    let file_path = dir.join(filename);
     let content = fs::read_to_string(file_path)?;
     let items = content
         .split_whitespace()
@@ -108,14 +105,14 @@ fn load_items_from_file(filename: &str) -> io::Result<Vec<String>> {
     Ok(items)
 }
 
-/// Reads the contents of .config/ttypr/words.txt and returns them as a vector of strings.
-pub fn read_words_from_file() -> io::Result<Vec<String>> {
-    load_items_from_file("words.txt")
+/// Reads the contents of words.txt from a specified directory.
+pub fn read_words_from_file(dir: &Path) -> io::Result<Vec<String>> {
+    load_items_from_file(dir, "words.txt")
 }
 
-/// Reads the contents of .config/ttypr/text.txt and returns them as a vector of strings.
-pub fn read_text_from_file() -> io::Result<Vec<String>> {
-    load_items_from_file("text.txt")
+/// Reads the contents of text.txt from a specified directory.
+pub fn read_text_from_file(dir: &Path) -> io::Result<Vec<String>> {
+    load_items_from_file(dir, "text.txt")
 }
 
 /// Just returns the default words set in a vector
@@ -130,11 +127,153 @@ pub fn default_text() -> Vec<String> {
     default_text.iter().map(|s| s.to_string()).collect()
 }
 
-/// Calculates the hash of .config/ttypr/text.txt
-pub fn calculate_text_txt_hash() -> io::Result<Vec<u8>> {
-    let path = get_config_dir()?.join("text.txt");
+/// Calculates the hash of text.txt in a specified directory.
+pub fn calculate_text_txt_hash(dir: &Path) -> io::Result<Vec<u8>> {
+    let path = dir.join("text.txt");
     let file_bytes = fs::read(path)?;
     let mut hasher = Sha256::new();
     hasher.update(file_bytes);
     Ok(hasher.finalize().to_vec())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_save_and_load_config() {
+        // Create a temporary directory to avoid interfering with actual config files.
+        let dir = tempdir().unwrap();
+        let dir_path = dir.path();
+
+        // --- Test saving and loading an existing config ---
+        let mut config_to_save = Config::default();
+        config_to_save.first_boot = false;
+        config_to_save.save_mistyped = false;
+        config_to_save.mistyped_chars.insert("a".to_string(), 100);
+
+        // Save the custom config and assert it was successful.
+        assert!(save_config(&config_to_save, dir_path).is_ok());
+
+        // Load the config back from the directory.
+        let loaded_config = load_config(dir_path).unwrap();
+
+        // Check that the loaded values match what we saved.
+        assert_eq!(loaded_config.first_boot, false);
+        assert_eq!(loaded_config.save_mistyped, false);
+        assert_eq!(*loaded_config.mistyped_chars.get("a").unwrap(), 100);
+
+        // --- Test loading a config when none exists ---
+        // `load_config` should create a default one automatically.
+        let new_dir = tempdir().unwrap();
+        let new_dir_path = new_dir.path();
+        let default_config = load_config(new_dir_path).unwrap();
+        
+        // Check that the created config has default values.
+        assert_eq!(default_config.first_boot, true);
+        assert!(default_config.mistyped_chars.is_empty());
+    }
+
+    #[test]
+    fn test_read_items_from_file() {
+        // Create a temporary directory.
+        let dir = tempdir().unwrap();
+        let dir_path = dir.path();
+
+        // --- Test reading a words.txt file ---
+        let words_content = "hello world from ttypr";
+        fs::write(dir_path.join("words.txt"), words_content).unwrap();
+        
+        let words = read_words_from_file(dir_path).unwrap();
+        assert_eq!(words, vec!["hello", "world", "from", "ttypr"]);
+
+        // --- Test reading a text.txt file ---
+        let text_content = "this is a line of text";
+        fs::write(dir_path.join("text.txt"), text_content).unwrap();
+
+        let text = read_text_from_file(dir_path).unwrap();
+        assert_eq!(text, vec!["this", "is", "a", "line", "of", "text"]);
+
+        // --- Test error handling for missing files ---
+        assert!(read_words_from_file(dir.path().join("non_existent_dir").as_path()).is_err());
+        assert!(read_text_from_file(dir.path().join("another_fake_dir").as_path()).is_err());
+    }
+
+    #[test]
+    fn test_calculate_text_txt_hash() {
+        // Create a temporary directory.
+        let dir = tempdir().unwrap();
+        let dir_path = dir.path();
+
+        // --- Test hashing an existing file ---
+        let content = "hello ttypr";
+        fs::write(dir_path.join("text.txt"), content).unwrap();
+
+        // Calculate the hash using our function.
+        let file_hash = calculate_text_txt_hash(dir_path).unwrap();
+
+        // Calculate the hash manually to get the expected result.
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        let expected_hash = hasher.finalize().to_vec();
+
+        assert_eq!(file_hash, expected_hash);
+
+        // --- Test error handling for a missing file ---
+        let new_dir = tempdir().unwrap();
+        assert!(calculate_text_txt_hash(new_dir.path()).is_err());
+    }
+    
+    #[test]
+    fn test_get_sorted_mistakes() {
+        // Create a sample map of mistyped characters
+        let mut mistyped_chars = HashMap::new();
+        mistyped_chars.insert("a".to_string(), 5);
+        mistyped_chars.insert("c".to_string(), 10);
+        mistyped_chars.insert("b".to_string(), 10); // Same count as 'c'
+        mistyped_chars.insert("d".to_string(), 2);
+
+        // Get the sorted list of mistakes (which is a Vec of references)
+        let sorted_result = get_sorted_mistakes(&mistyped_chars);
+
+        // Convert the result from a Vec of references to a Vec of owned values for comparison
+        let actual: Vec<(String, usize)> = sorted_result.iter().map(|(k, v)| ((*k).clone(), **v)).collect();
+
+        // Define the expected order directly with owned values
+        let expected: Vec<(String, usize)> = vec![
+            ("b".to_string(), 10),
+            ("c".to_string(), 10),
+            ("a".to_string(), 5),
+            ("d".to_string(), 2),
+        ];
+
+        assert_eq!(actual, expected);
+
+        // Test with an empty map
+        let empty_map = HashMap::new();
+        let sorted_empty = get_sorted_mistakes(&empty_map);
+        assert!(sorted_empty.is_empty());
+    }
+
+    #[test]
+    fn test_default_words() {
+        let words = default_words();
+        // Check that it returns a non-empty list
+        assert!(!words.is_empty(), "The default word list should not be empty.");
+        // Check for a specific known value to guard against accidental changes
+        assert_eq!(words[0], "the");
+        assert_eq!(words.last().unwrap(), "enormous");
+    }
+
+    #[test]
+    fn test_default_text() {
+        let text = default_text();
+        // Check that it returns a non-empty list
+        assert!(!text.is_empty(), "The default text list should not be empty.");
+        // Check for specific known values to guard against accidental changes
+        assert_eq!(text[0], "The");
+        assert_eq!(text.last().unwrap(), "mitten.");
+    }
 }

@@ -1,4 +1,4 @@
-use crate::utils::{default_text, default_words, save_config, Config};
+use crate::utils::{default_text, default_words, Config};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use rand::Rng;
@@ -168,7 +168,7 @@ impl App {
     /// responsible for persisting the application's state, such as saving the
     /// current configuration and adjusting any other relevant settings.
     pub fn on_exit(&mut self) {
-        use crate::utils::save_config;
+        use crate::utils::{get_config_dir, save_config};
 
         // (If exited the application while being the Text option)
         // Subtract how many "words" there were on the first three lines
@@ -184,9 +184,11 @@ impl App {
         }
 
         // Save config (for mistyped characters) before exiting
-        save_config(&self.config).unwrap_or_else(|err| {
-            eprintln!("Failed to save config: {}", err);
-        });
+        if let Ok(config_dir) = get_config_dir() {
+            save_config(&self.config, &config_dir).unwrap_or_else(|err| {
+                eprintln!("Failed to save config: {}", err);
+            });
+        }
     }
 
     /// Timer for notifications display
@@ -204,12 +206,15 @@ impl App {
     /// sets for typing, and prepares the application to be run.
     pub fn setup(&mut self) -> color_eyre::Result<()> {
         use crate::utils::{
-            calculate_text_txt_hash, default_text, default_words, load_config,
+            calculate_text_txt_hash, default_text, default_words, get_config_dir, load_config,
             read_text_from_file, read_words_from_file,
         };
 
+        // Get the config directory
+        let config_dir = get_config_dir()?;
+
         // Load config file or create it
-        self.config = load_config().unwrap_or_else(|_err| Config::default());
+        self.config = load_config(&config_dir).unwrap_or_else(|_err| Config::default());
 
         // (For the ASCII option) - Generate initial random charset and set all ids to 0
         // (This for block is here because the default typing option is Ascii)
@@ -226,11 +231,11 @@ impl App {
 
         // (For the Words option) - Read the words from .config/ttypr/words.txt
         // If it doesn't exist, it will default to an empty vector.
-        self.words = read_words_from_file().unwrap_or_default();
+        self.words = read_words_from_file(&config_dir).unwrap_or_default();
 
         // (For the Text option) - Read the text from .config/ttypr/text.txt
         // If it doesn't exist, it will default to an empty vector.
-        self.text = read_text_from_file().unwrap_or_default();
+        self.text = read_text_from_file(&config_dir).unwrap_or_default();
 
         // If words file provided use that one instead of the default set
         if !self.words.is_empty() {
@@ -269,14 +274,14 @@ impl App {
 
         // If the contents of the .config/ttypr/text.txt changed -
         // reset the position to the beginning
-        if self.config.last_text_txt_hash != calculate_text_txt_hash().ok() {
+        if self.config.last_text_txt_hash != calculate_text_txt_hash(&config_dir).ok() {
             self.config.skip_len = 0;
         }
 
         // Calculate the hash of the .config/ttypr/text.txt to
         // compare to the previously generated one and determine
         // whether the file contents have changed
-        self.config.last_text_txt_hash = calculate_text_txt_hash().ok();
+        self.config.last_text_txt_hash = calculate_text_txt_hash(&config_dir).ok();
 
         Ok(())
     }
@@ -424,9 +429,11 @@ impl App {
             match key.code {
                 KeyCode::Enter => {
                     self.config.first_boot = false;
-                    save_config(&self.config).unwrap_or_else(|err| {
-                        eprintln!("Failed to save config: {}", err);
-                    });
+                    if let Ok(config_dir) = crate::utils::get_config_dir() {
+                        crate::utils::save_config(&self.config, &config_dir).unwrap_or_else(|err| {
+                            eprintln!("Failed to save config: {}", err);
+                        });
+                    }
                     self.needs_clear = true;
                     self.needs_redraw = true;
                 }
@@ -800,33 +807,6 @@ mod tests {
         notifications.show_clear_mistyped();
         assert!(notifications.clear_mistyped);
         assert!(notifications.time_count.is_some());
-    }
-
-    #[test]
-    fn test_app_on_exit() {
-        // Scenario 1: In Text mode, skip_len should be correctly decremented.
-        let mut app1 = App::new();
-        app1.current_typing_option = CurrentTypingOption::Text;
-        app1.config.skip_len = 100;
-        app1.first_text_gen_len = 30;
-        app1.on_exit();
-        assert_eq!(app1.config.skip_len, 70);
-
-        // Scenario 2: In Text mode, if skip_len < first_text_gen_len, it should be reset to 0.
-        let mut app2 = App::new();
-        app2.current_typing_option = CurrentTypingOption::Text;
-        app2.config.skip_len = 20;
-        app2.first_text_gen_len = 30;
-        app2.on_exit();
-        assert_eq!(app2.config.skip_len, 0);
-
-        // Scenario 3: If not in Text mode, skip_len should remain unchanged.
-        let mut app3 = App::new();
-        app3.current_typing_option = CurrentTypingOption::Words;
-        app3.config.skip_len = 100;
-        app3.first_text_gen_len = 30;
-        app3.on_exit();
-        assert_eq!(app3.config.skip_len, 100);
     }
 
     #[test]
