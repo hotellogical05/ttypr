@@ -314,7 +314,7 @@ impl App {
     }
 
     /// Retrieves the next line of text from the source, respecting the configured line length.
-    pub fn gen_one_line_of_text(&mut self) -> String {
+    pub fn get_one_line_of_text(&mut self) -> String {
         let mut line_of_text = vec![];
         loop {
             // If reached the end of the text - set position to 0
@@ -375,7 +375,7 @@ impl App {
             let one_line = match self.current_typing_option {
                 CurrentTypingOption::Ascii => { self.gen_one_line_of_ascii() },
                 CurrentTypingOption::Words => { self.gen_one_line_of_words() },
-                CurrentTypingOption::Text => { self.gen_one_line_of_text() },
+                CurrentTypingOption::Text => { self.get_one_line_of_text() },
             };
         
             // Convert that line into characters
@@ -437,7 +437,7 @@ impl App {
                 // Only generate the lines if the text file was provided or the default text was chosen
                 if !self.text.is_empty() {
                     for _ in 0..3 {
-                        let one_line = self.gen_one_line_of_text();
+                        let one_line = self.get_one_line_of_text();
                         // Count for how many "words" there were on the first three lines
                         // to keep position on option switch and exit.
                         // Otherwise would always skip 3 lines down.
@@ -620,7 +620,7 @@ mod tests {
     }
 
     #[test]
-    fn test_app_gen_one_line_of_text() {
+    fn test_app_get_one_line_of_text() {
         let mut app = App::new();
         app.line_len = 20;
         app.text = "This is a sample text for testing purposes."
@@ -630,17 +630,17 @@ mod tests {
         app.config.skip_len = 0;
 
         // First line generation
-        let line1 = app.gen_one_line_of_text();
+        let line1 = app.get_one_line_of_text();
         assert_eq!(line1, "This is a sample");
         assert_eq!(app.config.skip_len, 4); // Should have processed 4 words
 
         // Second line generation
-        let line2 = app.gen_one_line_of_text();
+        let line2 = app.get_one_line_of_text();
         assert_eq!(line2, "text for testing");
         assert_eq!(app.config.skip_len, 7);
 
         // Third line generation, testing wrap-around
-        let line3 = app.gen_one_line_of_text();
+        let line3 = app.get_one_line_of_text();
         assert_eq!(line3, "purposes. This is a");
         assert_eq!(app.config.skip_len, 3); // Wrapped around and used 3 words
     }

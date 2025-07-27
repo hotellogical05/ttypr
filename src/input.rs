@@ -169,7 +169,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                                 // Generate three lines worth of words (characters) and ids.
                                 // Keep track of the length of those lines in characters.
                                 for _ in 0..3 {
-                                    let one_line = app.gen_one_line_of_text();
+                                    let one_line = app.get_one_line_of_text();
 
                                     // Count for how many "words" there were on the first three lines
                                     // to keep position on option switch and exit.
