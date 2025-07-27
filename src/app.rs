@@ -1,8 +1,6 @@
-use crate::utils::{default_text, default_words, Config};
-use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crate::utils::Config;
 use rand::Rng;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
 /// Manages the state and display timer for transient notifications in the UI.
@@ -407,233 +405,12 @@ impl App {
         self.lines_len.clear();
     }
 
-    /// Reads the terminal events.
-    pub fn handle_crossterm_events(&mut self) -> Result<()> {
-        // Only wait for keyboard events for 50ms - otherwise continue the loop iteration
-        if event::poll(std::time::Duration::from_millis(50))? {
-            match event::read()? {
-                Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key), // Handle keyboard input
-                Event::Mouse(_) => {}
-                Event::Resize(_, _) => { self.needs_redraw = true; } // Re-render if terminal window resized
-                _ => {}
-            }
-        }
-        Ok(())
-    }
-
-    /// Handles keyboard input.
-    fn on_key_event(&mut self, key: KeyEvent) {
-        // First boot page input (if toggled takes all input)
-        // If Enter key is pressed sets first_boot to false in the config file
-        if self.config.first_boot {
-            match key.code {
-                KeyCode::Enter => {
-                    self.config.first_boot = false;
-                    if let Ok(config_dir) = crate::utils::get_config_dir() {
-                        crate::utils::save_config(&self.config, &config_dir).unwrap_or_else(|err| {
-                            eprintln!("Failed to save config: {}", err);
-                        });
-                    }
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-                _ => {}
-            }
-            return;
-        }
-
-        // Help page input (if toggled takes all input)
-        if self.show_help {
-            match key.code {
-                KeyCode::Enter | KeyCode::Char('h') => {
-                    self.show_help = false;
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-                _ => {}
-            }
-            return; // Stop here
-        }
-
-        // Most mistyped page input (if toggled takes all input)
-        if self.show_mistyped {
-            match key.code {
-                KeyCode::Enter | KeyCode::Char('w') => {
-                    self.show_mistyped = false;
-                    self.needs_clear = true;
-                    self.needs_redraw = true;
-                }
-                _ => {}
-            }
-            return;
-        }
-
-        match self.current_mode {
-            // Menu mode input
-            CurrentMode::Menu => {
-                match key.code {
-                    // Exit the application
-                    KeyCode::Char('q') => self.quit(),
-
-                    // Reset mistyped characters count
-                    KeyCode::Char('r') => {
-                        self.config.mistyped_chars = HashMap::new();
-                        self.notifications.show_clear_mistyped();
-                        self.needs_redraw = true;
-                    }
-
-                    // Show most mistyped page
-                    KeyCode::Char('w') => {
-                        self.show_mistyped = true;
-                        self.needs_clear = true;
-                        self.needs_redraw = true;
-                    }
-
-                    // Toggle counting mistyped characters
-                    KeyCode::Char('c') => {
-                        self.config.save_mistyped = !self.config.save_mistyped;
-                        self.notifications.show_mistyped();
-                        self.needs_clear = true;
-                        self.needs_redraw = true;
-                    }
-
-                    // Toggle displaying notifications
-                    KeyCode::Char('n') => {
-                        self.config.show_notifications = !self.config.show_notifications;
-                        self.notifications.show_toggle();
-                        self.needs_clear = true;
-                        self.needs_redraw = true;
-                    }
-
-                    // Show help page
-                    KeyCode::Char('h') => {
-                        self.show_help = true;
-                        self.needs_clear = true;
-                        self.needs_redraw = true;
-                    }
-
-                    // Typing option switch (ASCII, Words, Text)
-                    KeyCode::Char('o') => self.switch_typing_option(),
-
-                    // Switch to Typing mode
-                    KeyCode::Char('i') => {
-                        // Check for whether the words/text has anything
-                        // to prevent being able to switch to Typing mode
-                        // in info page if no words/text file was provided
-                        match self.current_typing_option {
-                            CurrentTypingOption::Words => {
-                                if self.words.len() == 0 {
-                                    return;
-                                }
-                            }
-                            CurrentTypingOption::Text => {
-                                if self.text.len() == 0 {
-                                    return;
-                                }
-                            }
-                            _ => {}
-                        }
-
-                        self.current_mode = CurrentMode::Typing;
-                        self.notifications.show_mode();
-                        self.needs_redraw = true;
-                    }
-
-                    // If Enter is pressed in the Words/Text typing options,
-                    // with no words/text file provided - use the default set.
-                    KeyCode::Enter => {
-                        match self.current_typing_option {
-                            CurrentTypingOption::Words => {
-                                if self.words.is_empty() {
-                                    // Get the default words set
-                                    self.words = default_words();
-
-                                    // Generate three lines worth of words (characters) and ids.
-                                    // Keep track of the length of those lines in characters.
-                                    for _ in 0..3 {
-                                        let one_line = self.gen_one_line_of_words();
-                                        self.populate_charset_from_line(one_line);
-                                    }
-
-                                    // Remember to use the default word set
-                                    self.config.use_default_word_set = true;
-
-                                    self.needs_redraw = true;
-                                }
-                            }
-                            CurrentTypingOption::Text => {
-                                // Only generate the lines if the text file was provided or the default text was chosen
-                                if self.text.is_empty() {
-                                    // Get the default sentences
-                                    self.text = default_text();
-
-                                    // Generate three lines worth of words (characters) and ids.
-                                    // Keep track of the length of those lines in characters.
-                                    for _ in 0..3 {
-                                        let one_line = self.gen_one_line_of_text();
-
-                                        // Count for how many "words" there were on the first three lines
-                                        // to keep position on option switch and exit.
-                                        // Otherwise would always skip 3 lines down.
-                                        let first_text_gen_len: Vec<String> = one_line
-                                            .split_whitespace()
-                                            .map(String::from)
-                                            .collect();
-                                        self.first_text_gen_len += first_text_gen_len.len();
-
-                                        self.populate_charset_from_line(one_line);
-                                    }
-
-                                    // Remember to use the default text set
-                                    self.config.use_default_text_set = true;
-
-                                    self.needs_redraw = true;
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
-            // Typing mode input
-            CurrentMode::Typing => {
-                match key.code {
-                    KeyCode::Esc => {
-                        // Switch to Menu mode if ESC pressed
-                        self.current_mode = CurrentMode::Menu;
-                        self.notifications.show_mode();
-                        self.needs_redraw = true;
-                    }
-                    KeyCode::Char(c) => {
-                        // Add to input characters
-                        self.input_chars.push_back(c.to_string());
-                        self.needs_redraw = true;
-                        self.typed = true;
-                    }
-                    KeyCode::Backspace => {
-                        // Remove from input characters
-                        let position = self.input_chars.len();
-                        if position > 0 {
-                            // If there are no input characters - don't do anything
-                            self.input_chars.pop_back();
-                            self.ids[position - 1] = 0;
-                            self.needs_redraw = true;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-    }
-
     /// Switches to the next typing option and generates the text.
     ///
     /// This function cycles through the available typing options (ASCII, Words, Text)
     /// and prepares the application state for the new option. It clears the
     /// existing content in the buffers, generates new content, and signals to update the UI.
-    fn switch_typing_option(&mut self) {
+    pub(crate) fn switch_typing_option(&mut self) {
         self.needs_clear = true;
         self.notifications.show_option();
         self.clear_typing_buffers();
@@ -698,7 +475,7 @@ impl App {
     /// This helper function takes a string, splits it into characters, and updates
     /// the `charset`, `ids`, and `lines_len` fields of the `App` state. This is
     /// used to prepare the text that the user will be prompted to type.
-    fn populate_charset_from_line(&mut self, one_line: String) {
+    pub(crate) fn populate_charset_from_line(&mut self, one_line: String) {
         // Push a line of characters and ids
         let characters: Vec<char> = one_line.chars().collect();
         self.lines_len.push_back(characters.len());

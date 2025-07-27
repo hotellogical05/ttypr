@@ -2,10 +2,12 @@ use color_eyre::Result;
 use ratatui::DefaultTerminal;
 
 mod app;
+mod input;
 mod ui;
 mod utils;
 use crate::{
     app::App,
+    input::handle_events,
     ui::{draw_on_clear, render},
 };
 
@@ -52,7 +54,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         }
 
         // Read terminal events
-        app.handle_crossterm_events()?;
+        handle_events(app)?;
     }
 
     Ok(())
