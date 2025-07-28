@@ -130,6 +130,26 @@ fn render_mistakes_screen(frame: &mut Frame, app: &App) {
 ///
 /// These notifications provide feedback for actions like toggling settings, changing modes, etc.
 fn render_notifications(frame: &mut Frame, app: &App) {
+    // WPM display
+    if app.notifications.wpm {
+        let wpm_notification_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(25),
+                Constraint::Min(1),
+                Constraint::Min(0),
+            ]).split(frame.area());
+        let wpm_notification_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(60),
+                Constraint::Length(10),
+                Constraint::Min(0),
+            ]).split(wpm_notification_area[1]);
+
+        frame.render_widget(Line::from(format!("{} wpm", app.wpm.wpm)), wpm_notification_area[1]);
+    }
+
     // Cleared mistyped characters count display
     if app.notifications.clear_mistyped && app.config.show_notifications {
         let clear_mistyped_notification_area = Layout::default()

@@ -210,6 +210,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                     app.input_chars.push_back(c.to_string());
                     app.needs_redraw = true;
                     app.typed = true;
+                    app.wpm.on_key_press();
                 }
                 KeyCode::Backspace => {
                     // Remove from input characters

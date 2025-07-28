@@ -3,6 +3,52 @@ use rand::Rng;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
+pub struct Wpm {
+    pub timer: Option<Instant>,
+    pub time_since_last_key_pressed: Option<Instant>,
+    pub key_presses: usize,
+    pub wpm: usize,
+}
+
+impl Wpm {
+    pub fn new() -> Wpm {
+        Wpm {
+            timer: None,
+            time_since_last_key_pressed: None,
+            key_presses: 0,
+            wpm: 0,
+        }
+    }
+
+    pub fn on_key_press(&mut self) {
+        if let None = self.timer {
+            self.timer = Some(Instant::now());
+        }
+        self.time_since_last_key_pressed = Some(Instant::now());
+        self.key_presses += 1;
+    }
+
+    pub fn on_tick(&mut self) -> bool {
+        if let Some(time_since_last_key_pressed) = self.time_since_last_key_pressed {
+            if time_since_last_key_pressed.elapsed() > Duration::from_secs(3) {
+                let time = self.timer.unwrap().elapsed().as_secs_f64() - 3.0;
+                if time <= 0.0 || self.key_presses < 10 {
+                    self.timer = None;
+                    self.time_since_last_key_pressed = None;
+                    self.key_presses = 0;
+                } else {
+                    self.wpm = ((self.key_presses as f64 / 5.0) / (time / 60.0)) as usize;
+                    self.timer = None;
+                    self.time_since_last_key_pressed = None;
+                    self.key_presses = 0;
+                    return true;
+                }
+            }
+        }
+        false
+    }
+}
+
 /// Manages the state and display timer for transient notifications in the UI.
 pub struct Notifications {
     pub mode: bool,
@@ -10,6 +56,7 @@ pub struct Notifications {
     pub toggle: bool,
     pub mistyped: bool,
     pub clear_mistyped: bool,
+    pub wpm: bool,
     pub time_count: Option<Instant>,
 }
 
@@ -22,6 +69,7 @@ impl Notifications {
             toggle: false,
             mistyped: false,
             clear_mistyped: false,
+            wpm: false,
             time_count: None,
         }
     }
@@ -45,12 +93,18 @@ impl Notifications {
         self.toggle = false;
         self.mistyped = false;
         self.clear_mistyped = false;
+        self.wpm = false;
         self.time_count = None;
     }
 
     /// Starts the visibility timer for the currently active notification.
     fn trigger(&mut self) {
         self.time_count = Some(Instant::now());
+    }
+
+    pub fn show_wpm(&mut self) {
+        self.wpm = true;
+        self.trigger();
     }
 
     /// Shows a notification indicating a mode change.
@@ -95,11 +149,11 @@ pub struct App {
     pub needs_redraw: bool,
     pub needs_clear: bool,
     pub typed: bool,
-    pub charset: VecDeque<String>, // The random ASCII/Words character set (both are set of characters: ["a", "b", "c"])
+    pub charset: VecDeque<String>, // The ASCII/Words/Text character set (all are set of characters: ["a", "b", "c"])
     pub input_chars: VecDeque<String>, // The characters user typed
     pub ids: VecDeque<u8>, // Identifiers to display colored characters (0 - untyped, 1 - correct, 2 - incorrect)
     pub line_len: usize,
-    pub lines_len: VecDeque<usize>, // Current length of lines in characters for the Words option
+    pub lines_len: VecDeque<usize>, // Current length of lines in characters
     pub current_mode: CurrentMode,
     pub current_typing_option: CurrentTypingOption,
     pub words: Vec<String>,
@@ -109,6 +163,7 @@ pub struct App {
     pub show_help: bool,
     pub show_mistyped: bool,
     pub first_text_gen_len: usize,
+    pub wpm: Wpm,
 }
 
 /// Defines the major operational modes of the application.
@@ -152,6 +207,7 @@ impl App {
             show_help: false,
             show_mistyped: false,
             first_text_gen_len: 0,
+            wpm: Wpm::new(),
         }
     }
 
@@ -191,6 +247,10 @@ impl App {
 
     /// Timer for notifications display
     pub fn on_tick(&mut self) {
+        if self.wpm.on_tick() {
+            self.notifications.show_wpm();
+            self.needs_redraw = true;
+        }
         if self.notifications.on_tick() {
             self.needs_clear = true;
             self.needs_redraw = true;
