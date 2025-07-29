@@ -131,11 +131,13 @@ impl Notifications {
         self.time_count = Some(Instant::now());
     }
 
+    /// Shows a notification indicating displaying WPM has been toggled.
     pub fn show_display_wpm(&mut self) {
         self.display_wpm = true;
         self.trigger();
     }
 
+    /// Shows a notification indicating the WPM.
     pub fn show_wpm(&mut self) {
         self.wpm = true;
         self.trigger();
@@ -681,6 +683,18 @@ mod tests {
         notifications.show_clear_mistyped();
         assert!(notifications.clear_mistyped);
         assert!(notifications.time_count.is_some());
+        notifications.hide_all();
+
+        // Test show_wpm
+        notifications.show_wpm();
+        assert!(notifications.wpm);
+        assert!(notifications.time_count.is_some());
+        notifications.hide_all();
+
+        // Test show_display_wpm
+        notifications.show_display_wpm();
+        assert!(notifications.display_wpm);
+        assert!(notifications.time_count.is_some());
     }
 
     #[test]
@@ -890,5 +904,81 @@ mod tests {
         // Check ids
         assert_eq!(app.ids.len(), 5);
         assert!(app.ids.iter().all(|&id| id == 0)); // All ids should be 0
+    }
+
+    #[test]
+    fn test_wpm_logic() {
+        let mut wpm = Wpm::new();
+
+        // 1. Initial state check
+        assert!(wpm.timer.is_none());
+        assert!(wpm.time_since_last_key_pressed.is_none());
+        assert_eq!(wpm.key_presses, 0);
+        assert_eq!(wpm.wpm, 0);
+
+        // 2. First key press
+        wpm.on_key_press();
+        assert!(wpm.timer.is_some());
+        assert!(wpm.time_since_last_key_pressed.is_some());
+        assert_eq!(wpm.key_presses, 1);
+
+        // 3. Subsequent key presses
+        for _ in 0..19 {
+            wpm.on_key_press();
+        }
+        assert_eq!(wpm.key_presses, 20);
+
+        // 4. Tick before pause timeout
+        assert!(!wpm.on_tick());
+        assert_eq!(wpm.wpm, 0); // WPM should not be calculated yet
+
+        // 5. Simulate pause and test WPM calculation
+        thread::sleep(Duration::from_secs(4)); // Wait for longer than the 3s pause
+        let wpm_updated = wpm.on_tick();
+        
+        assert!(wpm_updated); // Should return true as WPM was calculated
+        assert_ne!(wpm.wpm, 0); // WPM should be a non-zero value
+        
+        // Check if state is reset
+        assert!(wpm.timer.is_none());
+        assert!(wpm.time_since_last_key_pressed.is_none());
+        assert_eq!(wpm.key_presses, 0);
+    }
+
+    #[test]
+    fn test_app_on_tick() {
+        let mut app = App::new();
+
+        // --- Scenario 1: WPM update triggers notification ---
+        // Manually set up the Wpm state to simulate a completed typing session
+        app.wpm.key_presses = 15; // A realistic number of key presses
+        app.wpm.timer = Some(Instant::now() - Duration::from_secs(10)); // Timer started 10s ago
+        app.wpm.time_since_last_key_pressed = Some(Instant::now() - Duration::from_secs(4)); // Paused for 4s
+
+        app.on_tick();
+
+        // Check that a WPM update occurred and triggered a notification
+        assert!(app.notifications.wpm);
+        assert!(app.notifications.time_count.is_some());
+        assert!(app.needs_redraw);
+
+        // Reset flags for the next scenario
+        app.needs_redraw = false;
+        app.notifications.hide_all();
+
+        // --- Scenario 2: Notification timeout clears flags ---
+        app.notifications.show_mode(); // Show a notification to start its timer
+        assert!(app.notifications.mode);
+
+        // Wait for the notification to time out
+        thread::sleep(Duration::from_secs(3));
+
+        app.on_tick();
+
+        // Check that the notification timeout has set the appropriate flags
+        assert!(app.needs_clear);
+        assert!(app.needs_redraw);
+        // The notification's own on_tick should have hidden it
+        assert!(!app.notifications.mode);
     }
 }
