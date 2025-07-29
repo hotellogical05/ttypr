@@ -74,6 +74,13 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Exit the application
                 KeyCode::Char('q') => app.quit(),
 
+                // Toggle wpm notification
+                KeyCode::Char('a') => {
+                    app.config.show_wpm_notification = !app.config.show_wpm_notification;
+                    app.notifications.show_display_wpm();
+                    app.needs_redraw = true;
+                }
+
                 // Reset mistyped characters count
                 KeyCode::Char('r') => {
                     app.config.mistyped_chars = HashMap::new();

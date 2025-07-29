@@ -130,8 +130,35 @@ fn render_mistakes_screen(frame: &mut Frame, app: &App) {
 ///
 /// These notifications provide feedback for actions like toggling settings, changing modes, etc.
 fn render_notifications(frame: &mut Frame, app: &App) {
-    // WPM display
-    if app.notifications.wpm {
+    // WPM display toggle notification
+    if app.notifications.display_wpm && app.config.show_notifications {
+        let display_wpm_notification_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(25),
+                Constraint::Min(1),
+                Constraint::Min(0),
+            ]).split(frame.area());
+        let display_wpm_notification_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(30),
+                Constraint::Length(20),
+                Constraint::Min(0),
+            ]).split(display_wpm_notification_area[1]);
+        
+        let display_wpm_on = Line::from(vec![Span::from("Display wpm "), Span::styled("on", Style::new().fg(Color::Green))]).alignment(Alignment::Left);
+        let display_wpm_off = Line::from(vec![Span::from("Display wpm "), Span::styled("off", Style::new().fg(Color::Red))]).alignment(Alignment::Left);
+
+        if app.config.show_wpm_notification {
+            frame.render_widget(display_wpm_on, display_wpm_notification_area[1]);
+        } else {
+            frame.render_widget(display_wpm_off, display_wpm_notification_area[1]);
+        }
+    }
+
+    // WPM notification
+    if app.notifications.wpm && app.config.show_wpm_notification {
         let wpm_notification_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![

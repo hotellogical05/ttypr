@@ -3,6 +3,10 @@ use rand::Rng;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
+/// Calculates and stores words per minute (WPM) data.
+///
+/// This struct tracks the user's key presses, the time elapsed, and calculates
+/// the typing speed. The WPM is calculated after a pause in typing.
 pub struct Wpm {
     pub timer: Option<Instant>,
     pub time_since_last_key_pressed: Option<Instant>,
@@ -11,6 +15,7 @@ pub struct Wpm {
 }
 
 impl Wpm {
+    /// Creates a new `Wpm` instance with default values.
     pub fn new() -> Wpm {
         Wpm {
             timer: None,
@@ -20,6 +25,10 @@ impl Wpm {
         }
     }
 
+    /// Handles the logic for each key press.
+    ///
+    /// This function starts the main timer on the first key press, resets the
+    /// pause timer, and increments the key press count.
     pub fn on_key_press(&mut self) {
         if let None = self.timer {
             self.timer = Some(Instant::now());
@@ -28,19 +37,36 @@ impl Wpm {
         self.key_presses += 1;
     }
 
+    /// Handles the logic for each application tick.
+    ///
+    /// This function checks if the user has paused typing (3 seconds). If so,
+    /// it calculates the WPM based on the key presses and elapsed time.
+    ///
+    /// Returns `true` if the WPM was calculated, indicating the UI needs
+    /// to be updated.
     pub fn on_tick(&mut self) -> bool {
         if let Some(time_since_last_key_pressed) = self.time_since_last_key_pressed {
+            // If the user has paused for more than 3 seconds, calculate WPM
             if time_since_last_key_pressed.elapsed() > Duration::from_secs(3) {
+                // Get the net typing time, excluding the 3-second pause
                 let time = self.timer.unwrap().elapsed().as_secs_f64() - 3.0;
+                
+                // If the net time is non-positive or too few keys were pressed, just reset
                 if time <= 0.0 || self.key_presses < 10 {
                     self.timer = None;
                     self.time_since_last_key_pressed = None;
                     self.key_presses = 0;
                 } else {
+                    // Calculate WPM: (total words) / (time in minutes)
+                    // A "word" is considered to be 5 characters (including spaces)
                     self.wpm = ((self.key_presses as f64 / 5.0) / (time / 60.0)) as usize;
+                    
+                    // Reset timers and counters for the next measurement
                     self.timer = None;
                     self.time_since_last_key_pressed = None;
                     self.key_presses = 0;
+
+                    // Indicate that WPM has been updated
                     return true;
                 }
             }
@@ -57,6 +83,7 @@ pub struct Notifications {
     pub mistyped: bool,
     pub clear_mistyped: bool,
     pub wpm: bool,
+    pub display_wpm: bool,
     pub time_count: Option<Instant>,
 }
 
@@ -70,6 +97,7 @@ impl Notifications {
             mistyped: false,
             clear_mistyped: false,
             wpm: false,
+            display_wpm: false,
             time_count: None,
         }
     }
@@ -94,12 +122,18 @@ impl Notifications {
         self.mistyped = false;
         self.clear_mistyped = false;
         self.wpm = false;
+        self.display_wpm = false;
         self.time_count = None;
     }
 
     /// Starts the visibility timer for the currently active notification.
     fn trigger(&mut self) {
         self.time_count = Some(Instant::now());
+    }
+
+    pub fn show_display_wpm(&mut self) {
+        self.display_wpm = true;
+        self.trigger();
     }
 
     pub fn show_wpm(&mut self) {
@@ -245,7 +279,10 @@ impl App {
         }
     }
 
-    /// Timer for notifications display
+    /// Handles tasks that run on every application tick.
+    ///
+    /// This function shows the WPM notification if a calculation is ready and also
+    /// manages the lifecycle of notifications, clearing them after a timeout.
     pub fn on_tick(&mut self) {
         if self.wpm.on_tick() {
             self.notifications.show_wpm();

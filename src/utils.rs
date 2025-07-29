@@ -7,6 +7,7 @@ use sha2::{Sha256, Digest};
 pub struct Config {
     pub first_boot: bool,
     pub show_notifications: bool,
+    pub show_wpm_notification: bool,
     #[serde(serialize_with = "serialize_sorted_by_value")]
     pub mistyped_chars: HashMap<String, usize>,
     pub save_mistyped: bool,
@@ -21,6 +22,7 @@ impl Default for Config {
         Self { 
             first_boot: true, 
             show_notifications: true,
+            show_wpm_notification: true,
             mistyped_chars: HashMap::new(),
             save_mistyped: true,
             skip_len: 0, // (For the text option) - To save position in the text

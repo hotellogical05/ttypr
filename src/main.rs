@@ -30,7 +30,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
     // Main application loop
     while app.running {
-        // Timer for displaying notifications
         app.on_tick();
 
         // If the user typed
