@@ -47,7 +47,7 @@ fn render_help_screen(frame: &mut Frame) {
     let first_boot_message_area = center(
         frame.area(),
         Constraint::Length(65),
-        Constraint::Length(30),
+        Constraint::Length(32),
     );
 
     let first_boot_message = vec![
@@ -66,6 +66,7 @@ fn render_help_screen(frame: &mut Frame) {
         Line::from("            c - toggle counting mistyped characters"),
         Line::from("            w - display top mistyped characters"),
         Line::from("            r - clear mistyped characters count"),
+        Line::from("            a - toggle displaying WPM"),
         Line::from(""),
         Line::from(""),
         Line::from("Typing mode:").alignment(Alignment::Center),
