@@ -406,7 +406,10 @@ impl App {
 
             if current_line_len > self.line_len {
                 line_of_words.pop();
-                let current_line = line_of_words.join(" ");
+                let mut current_line = line_of_words.join(" ");
+                if !current_line.is_empty() {
+                    current_line.push(' ');
+                }
                 return current_line; 
             };
         };
@@ -427,7 +430,10 @@ impl App {
                 line_of_text.pop();
                 self.config.skip_len -= 1;
 
-                let current_line = line_of_text.join(" ");
+                let mut current_line = line_of_text.join(" ");
+                if !current_line.is_empty() {
+                    current_line.push(' ');
+                }
                 return current_line;
             }
         }
@@ -719,15 +725,23 @@ mod tests {
         
         // Check that the line is not empty
         assert!(!line.is_empty());
+        // Check that it ends with a space
+        assert!(line.ends_with(' '));
 
-        // Check that the line length is within the limit
-        assert!(line.chars().count() <= app.line_len);
+        // Check that the line length is within the limit (or one over if the text part hit the limit exactly)
+        assert!(line.chars().count() <= app.line_len + 1);
 
         // Check with a smaller line length
         app.line_len = 10;
         let line = app.gen_one_line_of_words();
         assert!(!line.is_empty());
-        assert!(line.chars().count() <= app.line_len);
+        assert!(line.ends_with(' '));
+        assert!(line.chars().count() <= app.line_len + 1);
+
+        // Test edge case where no words fit
+        app.line_len = 2;
+        let line = app.gen_one_line_of_words();
+        assert!(line.is_empty());
     }
 
     #[test]
@@ -742,17 +756,17 @@ mod tests {
 
         // First line generation
         let line1 = app.get_one_line_of_text();
-        assert_eq!(line1, "This is a sample");
+        assert_eq!(line1, "This is a sample ");
         assert_eq!(app.config.skip_len, 4); // Should have processed 4 words
 
         // Second line generation
         let line2 = app.get_one_line_of_text();
-        assert_eq!(line2, "text for testing");
+        assert_eq!(line2, "text for testing ");
         assert_eq!(app.config.skip_len, 7);
 
         // Third line generation, testing wrap-around
         let line3 = app.get_one_line_of_text();
-        assert_eq!(line3, "purposes. This is a");
+        assert_eq!(line3, "purposes. This is a ");
         assert_eq!(app.config.skip_len, 3); // Wrapped around and used 3 words
     }
 
